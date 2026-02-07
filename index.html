@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cha-Gye-Bu | 차량 관리 시스템</title>
+    <title>Vehlog</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -27,7 +27,7 @@
                         }
                     },
                     fontFamily: {
-                        sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'Roboto', 'sans-serif'],
+                        sans: ['Pretendard JP', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'Roboto', 'sans-serif'],
                     }
                 }
             }
@@ -56,7 +56,7 @@
     </style>
 
     <!-- Alpine.js -->
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js" defer></script>
     
     <!-- Icons (Lucide) -->
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -80,7 +80,7 @@
                 <div class="w-8 h-8 rounded-lg bg-brand flex items-center justify-center text-white font-bold">
                     <i data-lucide="car-front"></i>
                 </div>
-                <h1 class="text-xl font-bold tracking-tight text-white">Cha-Gye-Bu</h1>
+                <h1 class="text-xl font-bold tracking-tight text-white">Vehlog</h1>
             </div>
             
             <div class="flex gap-2">
@@ -398,7 +398,7 @@
                             <div class="flex justify-between items-center text-sm">
                                 <div class="flex flex-col">
                                     <span class="text-white font-medium truncate max-w-[180px]" 
-                                          x-text="record.title || record.item || record.place || '내역 없음'"></span>
+                                          x-text="getRecordLabel(record)"></span>
                                     <span class="text-xs text-gray-500" x-text="record.place"></span>
                                 </div>
                                 <div class="text-right">
@@ -714,8 +714,14 @@
                     // 1. Filter by Car & Tab Type
                     let records = this.db.records.filter(r => r.carId === this.detail.carId && r.type === this.detail.tab);
                     
-                    // 2. Sort by Date Desc (Time strict: Date + created timestamp if same date)
-                    records.sort((a, b) => new Date(b.date) - new Date(a.date));
+                    // 2. Sort by Odometer and Date Desc
+                    records.sort((a, b) => {
+						if (a.odometer !== b.odometer) {
+							return b.odometer - a.odometer;
+						}
+
+						return new Date(b.date) - new Date(a.date)
+					});
 
                     // 3. Apply Filters
                     if (this.filters.dateStart) {
@@ -889,6 +895,14 @@
                     };
                     return map[record.subType] || (this.detail.tab === 'etc' ? '지출' : '-');
                 },
+				
+				getRecordLabel(record) {
+					if (record.volume) {
+						return `${record.volume}L 주유`;
+					}
+					
+					return record.title || record.item || record.place || '내역 없음';
+				},
 
                 formatDistance(km) { return new Intl.NumberFormat('ko-KR').format(km) + ' km'; },
                 formatNumber(num) { return new Intl.NumberFormat('ko-KR').format(num); },
