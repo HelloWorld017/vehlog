@@ -6,7 +6,7 @@
     <title>심플 차계부 (Car Logbook)</title>
     <link rel="stylesheet" href="https://unpkg.com/basecoat-ui/dist/basecoat.min.css">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-	<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     
     <style>
         :root {
@@ -22,24 +22,23 @@
         body {
             background-color: var(--bg-body);
             color: var(--text-main);
-            font-family: 'Pretendard JP', sans-serif;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
         }
-		
-		* {
-			box-sizing: border-box;
-			border-color: var(--border);
-		}
+        
+        * {
+            box-sizing: border-box;
+            border-color: var(--border);
+        }
 
-        /* Utility Helpers */
-        .container { max-width: 800px; margin: 0 auto; padding: 1rem; position: relative; min-height: 100vh;}
+        .container { max-width: 600px; margin: 0 auto; padding: 1rem; position: relative; min-height: 100vh;}
 
         /* Component Styles */
         .card {
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            padding: 1.25rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
 
         .btn {
@@ -62,24 +61,6 @@
         .btn-primary:hover { background: var(--primary-dark); }
         .btn-danger { background: #fee2e2; color: #dc2626; border-color: #fecaca; }
         
-        .btn-fab {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            width: 3.5rem;
-            height: 3.5rem;
-            border-radius: 50%;
-            background: var(--primary);
-            color: white;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-            border: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            z-index: 40;
-        }
-
         .input {
             width: 100%;
             padding: 0.6rem 0.8rem;
@@ -100,9 +81,10 @@
         }
 
         /* Tabs */
-        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; gap: 1rem; overflow-x: auto;}
-        .tab { padding: 0.75rem 0.5rem; cursor: pointer; border-bottom: 3px solid transparent; color: var(--text-sub); white-space: nowrap; }
-        .tab.active { border-bottom-color: var(--primary); color: var(--primary); font-weight: bold; }
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1rem; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.5rem;}
+        .tab { padding: 0.5rem 0.75rem; cursor: pointer; border-radius: 8px; color: var(--text-sub); white-space: nowrap; font-size: 0.9rem; font-weight: 500; transition: all 0.2s;}
+        .tab:hover { background-color: #f1f5f9; }
+        .tab.active { background-color: var(--primary); color: white; font-weight: bold; }
 
         /* Modal */
         .modal-overlay {
@@ -118,83 +100,116 @@
         .modal-content {
             background: white;
             border-radius: 16px;
-            width: 90%;
-            max-width: 500px;
+            width: 95%;
+            max-width: 480px;
             max-height: 90vh;
             overflow-y: auto;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            animation: modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            animation: modalPop 0.2s ease-out;
         }
         @keyframes modalPop {
-            0% { transform: scale(0.95); opacity: 0; }
+            0% { transform: scale(0.98); opacity: 0; }
             100% { transform: scale(1); opacity: 1; }
         }
 
-        /* Data Grid */
-        .log-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1rem;
+        /* List View */
+        .log-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
         }
         .log-item {
             background: white;
             border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 1.25rem;
-            transition: transform 0.2s;
+            border-radius: 12px;
+            padding: 1rem;
+            transition: background-color 0.2s;
         }
-        .log-item:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .log-item:active { background-color: #f8fafc; }
 
         /* Maintenance Scroll */
         .maintenance-scroll {
             display: flex;
             overflow-x: auto;
-            gap: 1rem;
-            padding: 0.5rem 0 1.5rem 0;
+            gap: 0.75rem;
+            padding: 0.25rem 0 1rem 0;
+            scroll-snap-type: x mandatory;
         }
         .maint-card {
-            min-width: 220px;
+            min-width: 240px;
             background: white;
             border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 1.25rem;
+            padding: 1rem;
             flex-shrink: 0;
+            scroll-snap-align: start;
+            position: relative;
         }
-        .progress-bar { height: 8px; background: #e2e8f0; border-radius: 4px; margin-top: 0.75rem; overflow: hidden; }
+        .progress-bar { height: 6px; background: #f1f5f9; border-radius: 3px; margin-top: 0.75rem; overflow: hidden; }
         .progress-fill { height: 100%; background: var(--primary); transition: width 0.5s ease-out; }
 
-        /* Toast & Banner */
+        /* Custom Select */
+        .custom-select-wrapper { position: relative; }
+        .custom-select-dropdown {
+            position: absolute;
+            top: 100%; left: 0; right: 0;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-top: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 20;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .custom-select-option {
+            padding: 0.75rem;
+            cursor: pointer;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .custom-select-option:hover { background-color: #f8fafc; }
+        .custom-select-option:last-child { border-bottom: none; }
+
+        /* Toast */
         .toast {
             position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #1e293b;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 50px;
-            font-size: 0.9rem;
-            z-index: 1000;
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
+            bottom: 24px; left: 50%; transform: translateX(-50%);
+            background: #1e293b; color: white; padding: 12px 24px;
+            border-radius: 50px; font-size: 0.9rem; z-index: 1000;
+            opacity: 0; transition: opacity 0.3s; pointer-events: none;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
         .toast.show { opacity: 1; }
         
         .unsaved-banner {
-            position: fixed;
-            bottom: 0; left: 0; right: 0;
-            background: #fff7ed;
-            border-top: 1px solid #fdba74;
-            color: #9a3412;
-            padding: 10px;
-            text-align: center;
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: #fff7ed; border-top: 1px solid #fdba74;
+            color: #9a3412; padding: 10px; text-align: center;
+            display: flex; justify-content: center; gap: 10px;
+            align-items: center; z-index: 90;
+        }
+
+        /* Add Button Row */
+        .add-row-btn {
+            width: 100%;
+            padding: 1rem;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            background: #f8fafc;
+            color: var(--text-sub);
+            font-weight: 600;
             display: flex;
-            justify-content: center;
-            gap: 10px;
             align-items: center;
-            z-index: 90;
+            justify-content: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 1rem;
+        }
+        .add-row-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: #eff6ff;
         }
     </style>
 </head>
@@ -202,18 +217,20 @@
     <div x-data="app" class="container">
         
         <!-- Header -->
-        <header class="flex justify-between items-center mb-6">
-            <h1 class="font-bold text-xl flex items-center gap-2 text-blue-600">
-                <i class="ph ph-car-profile text-2xl" style="color: var(--primary)"></i> 
+        <header class="flex justify-between items-center mb-6 sticky top-0 bg-body/95 backdrop-blur z-30 py-2">
+            <h1 class="font-bold text-xl flex items-center gap-2 text-blue-600 cursor-pointer" @click="route='home'">
+                <i class="ph ph-car-profile text-2xl"></i> 
                 <span>차계부</span>
             </h1>
             <div x-show="route !== 'home'">
-                <button @click="goBack()" class="btn text-sm"><i class="ph ph-arrow-left"></i> 목록으로</button>
+                <button @click="goBack()" class="btn text-sm border-0 bg-transparent text-gray-500 hover:bg-gray-100">
+                    <i class="ph ph-arrow-left text-lg"></i>
+                </button>
             </div>
         </header>
 
         <!-- View: Home -->
-        <div x-show="route === 'home'" class="flex flex-col gap-4 max-w-md mx-auto mt-10">
+        <div x-show="route === 'home'" class="flex flex-col gap-4 mt-10">
             <div class="card p-8 text-center">
                 <div class="mb-6 flex justify-center">
                     <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
@@ -221,56 +238,52 @@
                     </div>
                 </div>
                 <h2 class="font-bold text-2xl mb-2">환영합니다!</h2>
-                <p class="mb-8 text-gray">차량 관리를 시작할 데이터베이스를 선택하세요.</p>
+                <p class="mb-8 text-gray-500">차량 관리를 시작할 데이터베이스를 선택하세요.</p>
                 <div class="flex flex-col gap-3">
-                    <button @click="openDB('local')" class="btn btn-primary py-3">
-                        <i class="ph ph-device-mobile"></i> 내 기기에서 시작 (LocalStorage)
+                    <button @click="openDB('local')" class="btn btn-primary py-3 justify-center">
+                        <i class="ph ph-device-mobile"></i> 내 기기에서 시작
                     </button>
-                    <button @click="createDB()" class="btn text-red py-3">
-                        <i class="ph ph-trash"></i> 데이터 초기화 / 새로 만들기
+                    <button @click="createDB()" class="btn text-red-500 py-3 justify-center border-red-200 hover:bg-red-50">
+                        <i class="ph ph-trash"></i> 데이터 초기화
                     </button>
                 </div>
             </div>
         </div>
 
         <!-- View: List -->
-        <div x-show="route === 'list'" class="flex flex-col gap-6">
+        <div x-show="route === 'list'" class="flex flex-col gap-4">
             <div class="flex justify-between items-center">
-                <div>
-                    <h2 class="font-bold text-xl">내 차량 목록</h2>
-                    <p class="text-sm text-gray">관리할 차량을 선택하세요</p>
-                </div>
-                <button @click="addVehicle()" class="btn btn-primary"><i class="ph ph-plus"></i> 차량 추가</button>
+                <h2 class="font-bold text-lg">내 차량 목록</h2>
+                <button @click="addVehicle()" class="btn btn-primary text-sm"><i class="ph ph-plus"></i> 추가</button>
             </div>
 
-            <div class="grid gap-4">
+            <div class="flex flex-col gap-3">
                 <template x-for="(car, index) in db.data.vehicles" :key="car.id">
-                    <div class="card flex justify-between items-center hover:shadow-md transition-shadow cursor-pointer" @click="selectVehicle(car)">
+                    <div class="card flex justify-between items-center cursor-pointer hover:border-blue-300 transition-colors" @click="selectVehicle(car)">
                         <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-500">
-                                <i class="ph ph-car text-xl"></i>
+                            <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center text-gray-500">
+                                <i class="ph ph-car text-lg"></i>
                             </div>
                             <div>
-                                <h3 class="font-bold text-lg" x-text="car.info.number"></h3>
-                                <p class="text-sm text-gray" x-text="[car.info.maker, car.info.model].filter(Boolean).join(' ') || '정보 없음'"></p>
+                                <h3 class="font-bold text-lg leading-tight" x-text="car.info.number"></h3>
+                                <p class="text-sm text-gray-500 mt-0.5" x-text="[car.info.maker, car.info.model].filter(Boolean).join(' ') || '정보 없음'"></p>
                             </div>
                         </div>
-                        <button @click.stop="deleteVehicle(index)" class="btn btn-danger p-2 rounded-full"><i class="ph ph-trash"></i></button>
+                        <button @click.stop="deleteVehicle(index)" class="text-gray-400 hover:text-red-500 p-2"><i class="ph ph-trash text-lg"></i></button>
                     </div>
                 </template>
             </div>
             
-            <div x-show="db.data.vehicles.length === 0" class="text-center py-10 text-gray bg-gray-50 rounded-lg border border-dashed border-gray-300">
-                <i class="ph ph-car text-3xl mb-2 block"></i>
+            <div x-show="db.data.vehicles.length === 0" class="text-center py-10 text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                <i class="ph ph-car text-3xl mb-2 block opacity-50"></i>
                 등록된 차량이 없습니다.
             </div>
 
             <div class="card p-4 mt-4 bg-gray-50 border-none">
-                <h4 class="font-bold text-sm mb-2 text-gray-700">데이터 백업/복원</h4>
-                <div class="flex gap-2">
-                    <button @click="exportDB()" class="btn text-sm bg-white"><i class="ph ph-download-simple"></i> 내보내기</button>
-                    <label class="btn text-sm bg-white cursor-pointer">
-                        <i class="ph ph-upload-simple"></i> 가져오기
+                <div class="flex gap-2 justify-center">
+                    <button @click="exportDB()" class="btn text-sm bg-white text-gray-600"><i class="ph ph-download-simple"></i> 백업</button>
+                    <label class="btn text-sm bg-white text-gray-600 cursor-pointer">
+                        <i class="ph ph-upload-simple"></i> 복원
                         <input type="file" class="hidden" @change="importDB">
                     </label>
                 </div>
@@ -280,22 +293,26 @@
         <!-- View: Detail -->
         <div x-show="route === 'detail'" class="w-full pb-20">
             <!-- Tabs -->
-            <div class="tabs sticky top-0 bg-body z-10 pt-2">
-                <div class="tab" :class="{ 'active': activeTab === 'info' }" @click="activeTab = 'info'">차량정보</div>
-                <div class="tab" :class="{ 'active': activeTab === 'fuel' }" @click="activeTab = 'fuel'">주유기록</div>
-                <div class="tab" :class="{ 'active': activeTab === 'maint' }" @click="activeTab = 'maint'">정비내역</div>
-                <div class="tab" :class="{ 'active': activeTab === 'other' }" @click="activeTab = 'other'">기타지출</div>
+            <div class="tabs sticky top-[50px] bg-body z-20">
+                <div class="tab" :class="{ 'active': activeTab === 'info' }" @click="activeTab = 'info'">정보</div>
+                <div class="tab" :class="{ 'active': activeTab === 'fuel' }" @click="activeTab = 'fuel'">주유</div>
+                <div class="tab" :class="{ 'active': activeTab === 'maint' }" @click="activeTab = 'maint'">정비</div>
+                <div class="tab" :class="{ 'active': activeTab === 'other' }" @click="activeTab = 'other'">기타</div>
             </div>
 
             <!-- Tab: Info -->
             <div x-show="activeTab === 'info'" class="card">
-                <h3 class="font-bold mb-6 text-lg">기본 정보 수정</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <h3 class="font-bold mb-4 text-lg">차량 정보</h3>
+                <div class="grid grid-cols-1 gap-4">
                     <div><label class="label">차량번호</label><input type="text" x-model="currentVehicle.info.number" class="input"></div>
-                    <div><label class="label">제조사</label><input type="text" x-model="currentVehicle.info.maker" class="input"></div>
-                    <div><label class="label">차종</label><input type="text" x-model="currentVehicle.info.model" class="input"></div>
-                    <div><label class="label">등급</label><input type="text" x-model="currentVehicle.info.trim" class="input"></div>
-                    <div><label class="label">연식</label><input type="number" x-model="currentVehicle.info.year" class="input"></div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="label">제조사</label><input type="text" x-model="currentVehicle.info.maker" class="input"></div>
+                        <div><label class="label">차종</label><input type="text" x-model="currentVehicle.info.model" class="input"></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="label">연식</label><input type="number" x-model="currentVehicle.info.year" class="input"></div>
+                        <div><label class="label">배기량(cc)</label><input type="number" x-model="currentVehicle.info.cc" class="input"></div>
+                    </div>
                     <div>
                         <label class="label">연료</label>
                         <select x-model="currentVehicle.info.fuel" class="input">
@@ -306,229 +323,277 @@
                             <option value="hybrid">하이브리드</option>
                         </select>
                     </div>
-                    <div><label class="label">배기량(cc)</label><input type="number" x-model="currentVehicle.info.cc" class="input"></div>
                 </div>
             </div>
 
-            <!-- Filters -->
-            <div x-show="activeTab !== 'info'" class="mb-6">
-                <div class="card p-4 bg-white">
-                    <div class="flex flex-col gap-3">
-                        <div class="relative">
-                            <i class="ph ph-magnifying-glass absolute left-3 top-3 text-gray-400"></i>
-                            <input type="text" x-model="searchTerm" placeholder="검색 (장소, 항목, 메모)" class="input pl-10" style="padding-left: 2.5rem;">
+            <!-- Maintenance Timer Section (Only in Maint Tab) -->
+            <div x-show="activeTab === 'maint'" class="mb-6">
+                <div class="flex justify-between items-end mb-2 px-1">
+                    <h4 class="font-bold text-gray-700">정비 타이머</h4>
+                    <button @click="openAddRuleForm()" class="text-xs text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded hover:bg-blue-100">
+                        + 타이머 추가
+                    </button>
+                </div>
+                <div class="maintenance-scroll">
+                    <template x-for="(card, idx) in maintenanceCards" :key="idx">
+                        <div class="maint-card shadow-sm border-l-4" :class="card.percent >= 90 ? 'border-l-red-500' : 'border-l-blue-500'">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="font-bold text-lg truncate pr-2" x-text="card.name"></span>
+                                <div class="flex gap-1">
+                                    <button @click="snoozeRule(card.originalIndex)" class="p-1 text-gray-400 hover:text-blue-500 rounded bg-gray-50" title="1000km 미루기">
+                                        <i class="ph ph-moon"></i>
+                                    </button>
+                                    <button @click="deleteRule(card.originalIndex)" class="p-1 text-gray-400 hover:text-red-500 rounded bg-gray-50">
+                                        <i class="ph ph-x"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-end mb-1">
+                                <div class="text-sm text-gray-600">
+                                    <span x-text="card.remainingKm > 0 ? card.remainingKm.toLocaleString() + 'km 남음' : Math.abs(card.remainingKm).toLocaleString() + 'km 지남'"></span>
+                                </div>
+                                <span class="text-xs font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-600" x-show="card.percent >= 90">점검필요</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" :style="'width: ' + Math.min(card.percent, 100) + '%'" :class="{'bg-red-500': card.percent >= 90}"></div>
+                            </div>
+                            <div class="text-xs text-gray-400 mt-2 text-right">
+                                주기: <span x-text="card.interval.toLocaleString()"></span>km
+                                <span x-show="card.deferred > 0" x-text="` (+${card.deferred.toLocaleString()}km 미룸)`"></span>
+                            </div>
                         </div>
-                        <div class="flex gap-2">
-                            <input type="date" x-model="filterDateStart" class="input text-sm">
-                            <input type="date" x-model="filterDateEnd" class="input text-sm">
-                        </div>
-                        <div x-show="activeTab === 'maint'" class="flex gap-3 items-center text-sm pt-2 border-t mt-1">
-                            <span class="font-bold text-gray-600">보기:</span>
-                            <label class="flex items-center gap-1 cursor-pointer"><input type="radio" value="all" x-model="filterType"> 전체</label>
-                            <label class="flex items-center gap-1 cursor-pointer"><input type="radio" value="repair" x-model="filterType"> 정비</label>
-                            <label class="flex items-center gap-1 cursor-pointer"><input type="radio" value="check" x-model="filterType"> 점검</label>
-                        </div>
+                    </template>
+                    <!-- Empty State for Rules -->
+                    <div x-show="maintenanceCards.length === 0" class="maint-card flex flex-col items-center justify-center text-gray-400 border-dashed">
+                        <i class="ph ph-wrench text-2xl mb-1"></i>
+                        <span class="text-sm">타이머를 추가해보세요</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Maintenance Timer -->
-            <div x-show="activeTab === 'maint'" class="mb-6">
-                <div class="flex justify-between items-end mb-2 px-1">
-                    <h4 class="font-bold text-gray-700">정비 알림</h4>
-                    <span class="text-xs text-gray">교체주기 임박순</span>
+            <!-- Filters & Search (Inline) -->
+            <div x-show="activeTab !== 'info'" class="mb-4">
+                <div class="flex gap-2 mb-2">
+                    <div class="relative w-full">
+                        <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                        <input type="text" x-model="searchTerm" placeholder="검색" class="input pl-9 py-2 text-sm bg-white">
+                    </div>
+                    <button @click="toggleFilter = !toggleFilter" class="btn px-3 text-gray-500" :class="{'bg-blue-50 text-blue-600 border-blue-200': hasActiveFilters}">
+                        <i class="ph ph-faders"></i>
+                    </button>
                 </div>
-                <div class="maintenance-scroll">
-                    <template x-for="card in maintenanceCards">
-                        <div class="maint-card shadow-sm">
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="font-bold text-lg" x-text="card.name"></span>
-                                <span class="text-xs font-bold px-2 py-1 rounded bg-red-100 text-red-600" x-show="card.percent >= 90">임박</span>
-                            </div>
-                            <div class="text-sm text-gray-600 mb-1" x-text="'다음 교체: ' + card.nextKm.toLocaleString() + 'km'"></div>
-                            <div class="text-xs text-gray-400" x-text="'(남은 거리: ' + card.remainingKm.toLocaleString() + 'km)'"></div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" :style="'width: ' + card.percent + '%'" :class="{'bg-red-500': card.percent >= 90}"></div>
-                            </div>
-                        </div>
-                    </template>
+                
+                <!-- Expanded Filters -->
+                <div x-show="toggleFilter" class="card p-3 mb-2 bg-gray-50 border-gray-200" x-transition>
+                    <div class="flex gap-2 mb-2">
+                        <input type="date" x-model="filterDateStart" class="input text-sm bg-white">
+                        <span class="self-center text-gray-400">~</span>
+                        <input type="date" x-model="filterDateEnd" class="input text-sm bg-white">
+                    </div>
+                    <div x-show="activeTab === 'maint'" class="flex gap-4 items-center text-sm">
+                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" value="all" x-model="filterType" class="accent-blue-600"> 전체</label>
+                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" value="repair" x-model="filterType" class="accent-blue-600"> 정비</label>
+                        <label class="flex items-center gap-1 cursor-pointer"><input type="radio" value="check" x-model="filterType" class="accent-blue-600"> 점검</label>
+                    </div>
                 </div>
             </div>
 
-            <!-- Log List -->
-            <div x-show="activeTab !== 'info'" class="log-grid pb-20">
+            <!-- Add Button Row (Top of List) -->
+            <div x-show="activeTab !== 'info'">
+                <button @click="openAddForm()" class="add-row-btn">
+                    <i class="ph ph-plus-circle text-xl"></i>
+                    <span x-text="getTabName() + ' 기록 추가하기'"></span>
+                </button>
+            </div>
+
+            <!-- Log List (1 Column Layout) -->
+            <div x-show="activeTab !== 'info'" class="log-list pb-20">
                 <template x-for="log in paginatedLogs" :key="log.id">
-                    <div class="log-item relative group">
-                        <div class="flex justify-between items-start mb-3">
-                            <div>
-                                <div class="font-bold text-lg text-gray-800" x-text="log.date"></div>
-                                <div class="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
-                                    <i class="ph ph-gauge"></i> <span x-text="Number(log.odo).toLocaleString() + ' km'"></span>
-                                </div>
-                            </div>
-                            <button @click="removeLog(activeTab, log.id)" class="text-gray-300 hover:text-red-500 p-1"><i class="ph ph-trash text-lg"></i></button>
+                    <div class="log-item relative">
+                        <!-- Row 1: Date & Cost -->
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="font-bold text-gray-800" x-text="log.date"></div>
+                            <div class="font-bold text-blue-600" x-text="Number(log.cost).toLocaleString() + '원'"></div>
                         </div>
-                        
-                        <!-- Log Content -->
-                        <div class="bg-gray-50 rounded p-3 mb-2">
-                            <!-- Fuel -->
-                            <div x-show="activeTab === 'fuel'">
-                                <div class="flex justify-between items-center mb-1">
-                                    <span class="font-bold text-blue-600" x-text="Number(log.cost).toLocaleString() + '원'"></span>
-                                    <span class="text-sm bg-white border px-2 rounded" x-text="log.fuelType === 'full' ? '가득' : '부분'"></span>
-                                </div>
-                                <div class="text-sm text-gray-600 flex justify-between">
-                                    <span x-text="log.volume + 'L'"></span>
-                                    <span x-text="'@ ' + Number(log.pricePerUnit).toLocaleString() + '원'"></span>
-                                </div>
-                                <div class="mt-2 text-xs text-green-700 font-bold flex items-center gap-1" x-show="log.efficiency">
-                                    <i class="ph ph-trend-up"></i> 연비: <span x-text="log.efficiency"></span> km/L
-                                </div>
+
+                        <!-- Row 2: Main Info (Item or Volume) -->
+                        <div class="mb-2">
+                             <div x-show="activeTab === 'fuel'" class="flex gap-2 text-sm text-gray-700">
+                                <span class="bg-blue-50 text-blue-700 px-1.5 rounded text-xs self-center" x-text="log.fuelType === 'full' ? '가득' : '부분'"></span>
+                                <span x-text="log.volume + 'L'"></span>
+                                <span class="text-gray-400">|</span>
+                                <span x-text="Number(log.pricePerUnit).toLocaleString() + '원/L'"></span>
                             </div>
-                            <!-- Maint -->
-                            <div x-show="activeTab === 'maint'">
-                                <div class="flex justify-between items-center mb-1">
-                                    <span class="font-bold text-gray-800" x-text="log.item"></span>
-                                    <span class="font-bold text-blue-600" x-text="Number(log.cost).toLocaleString() + '원'"></span>
-                                </div>
-                                <div class="text-xs text-gray-500 badge inline-block px-2 py-0.5 rounded bg-gray-200" x-text="log.maintType === 'repair' ? '정비' : '점검'"></div>
+                            <div x-show="activeTab === 'maint'" class="flex gap-2 items-center">
+                                <span class="bg-gray-100 text-gray-600 px-1.5 rounded text-xs" x-text="log.maintType === 'repair' ? '정비' : '점검'"></span>
+                                <span class="font-medium" x-text="log.item"></span>
                             </div>
-                            <!-- Other -->
-                            <div x-show="activeTab === 'other'">
-                                <div class="flex justify-between items-center mb-1">
-                                    <span class="font-bold text-gray-800" x-text="log.item"></span>
-                                    <span class="font-bold text-blue-600" x-text="Number(log.cost).toLocaleString() + '원'"></span>
-                                </div>
+                            <div x-show="activeTab === 'other'" class="font-medium" x-text="log.item"></div>
+                        </div>
+
+                        <!-- Row 3: Odo & Place -->
+                        <div class="flex items-center text-sm text-gray-500 gap-2 bg-gray-50 p-2 rounded-lg">
+                            <div class="flex items-center gap-1">
+                                <i class="ph ph-gauge"></i>
+                                <span x-text="Number(log.odo).toLocaleString() + 'km'"></span>
+                            </div>
+                            <span class="text-gray-300">|</span>
+                            <div class="flex items-center gap-1 overflow-hidden">
+                                <i class="ph ph-map-pin" x-show="log.place"></i>
+                                <span class="truncate" x-text="log.place || '-'"></span>
                             </div>
                         </div>
 
-                        <div class="flex justify-between items-center text-sm text-gray-500">
-                            <div class="flex items-center gap-1 text-xs">
-                                <i class="ph ph-map-pin" x-show="log.place"></i>
-                                <span x-text="log.place"></span>
-                            </div>
+                        <!-- Efficiency Badge -->
+                        <div x-show="log.efficiency" class="absolute top-10 right-4 text-xs font-bold text-green-600 flex items-center gap-1 bg-green-50 px-2 py-0.5 rounded-full border border-green-100">
+                            <i class="ph ph-trend-up"></i> <span x-text="log.efficiency"></span> km/L
                         </div>
-                         <div x-show="log.memo" class="mt-2 text-xs text-gray-500 border-t pt-2 border-dashed">
-                            <i class="ph ph-note-pencil mr-1"></i> <span x-text="log.memo"></span>
+
+                        <!-- Memo -->
+                         <div x-show="log.memo" class="mt-2 text-xs text-gray-500 flex gap-1">
+                            <i class="ph ph-note-pencil"></i> <span x-text="log.memo"></span>
                         </div>
+                        
+                        <!-- Delete Action -->
+                        <button @click="removeLog(activeTab, log.id)" class="absolute top-2 right-2 text-gray-300 hover:text-red-500 p-1">
+                            <i class="ph ph-trash"></i>
+                        </button>
                     </div>
                 </template>
             </div>
 
-            <!-- Floating Action Button for Add -->
-            <button x-show="activeTab !== 'info'" @click="openAddForm()" class="btn-fab transition-transform hover:scale-110 active:scale-95">
-                <i class="ph ph-plus"></i>
-            </button>
-
             <!-- Pagination -->
-            <div x-show="activeTab !== 'info' && currentLogs.length > itemsPerPage" class="flex justify-center gap-2 mt-6 pb-20">
-                <button @click="page--" :disabled="page === 1" class="btn text-sm">이전</button>
-                <span class="p-2 font-bold text-gray-600" x-text="page"></span>
-                <button @click="page++" :disabled="paginatedLogs.length < itemsPerPage" class="btn text-sm">다음</button>
+            <div x-show="activeTab !== 'info' && currentLogs.length > itemsPerPage" class="flex justify-center gap-4 mt-6 pb-20 items-center">
+                <button @click="page--" :disabled="page === 1" class="btn text-sm px-4">이전</button>
+                <span class="text-sm font-bold text-gray-600" x-text="page + ' / ' + Math.ceil(currentLogs.length/itemsPerPage)"></span>
+                <button @click="page++" :disabled="paginatedLogs.length < itemsPerPage" class="btn text-sm px-4">다음</button>
             </div>
         </div>
 
-        <!-- MODAL: Add Log Form -->
+        <!-- MODAL: Add/Edit Log Form -->
         <div x-show="showAddForm" class="modal-overlay hidden" :class="{ 'hidden': !showAddForm }">
             <div class="modal-content" @click.away="closeAddForm()">
-                <div class="p-4 border-b flex justify-between items-center bg-gray-50">
-                    <h3 class="font-bold text-lg" x-text="getTabName() + ' 기록 추가'"></h3>
+                <div class="p-4 border-b flex justify-between items-center bg-gray-50 sticky top-0 z-10">
+                    <h3 class="font-bold text-lg" x-text="getTabName() + ' 기록'"></h3>
                     <button @click="closeAddForm()" class="text-gray-400 hover:text-gray-600"><i class="ph ph-x text-xl"></i></button>
                 </div>
                 
-                <div class="p-6 flex flex-col gap-5">
+                <div class="p-5 flex flex-col gap-5">
                     <!-- Common: Date & Odo -->
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-2 gap-3">
                         <div>
                             <label class="label">날짜</label>
                             <input type="date" x-model="logForm.date" class="input">
                         </div>
                         <div>
-                            <label class="label">누적주행거리 (km)</label>
-                            <input type="number" x-model="logForm.odo" class="input" placeholder="ex) 15000">
+                            <label class="label">주행거리 (km)</label>
+                            <input type="number" x-model="logForm.odo" class="input" placeholder="0">
                         </div>
                     </div>
 
-                    <!-- Tab Specific: Fuel -->
+                    <!-- Tab Specific Forms -->
                     <template x-if="activeTab === 'fuel'">
-                        <div class="flex flex-col gap-4 py-4">
-                            <div class="flex gap-4 mb-1">
-                                <label class="flex items-center gap-2 cursor-pointer font-bold text-sm">
-                                    <input type="radio" value="full" x-model="logForm.fuelType" class="accent-blue-600"> 가득(상한)
+                        <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 flex flex-col gap-3">
+                            <div class="flex gap-4 justify-center mb-1">
+                                <label class="flex items-center gap-2 cursor-pointer text-sm font-semibold">
+                                    <input type="radio" value="full" x-model="logForm.fuelType" class="accent-blue-600 w-4 h-4"> 가득(상한)
                                 </label>
-                                <label class="flex items-center gap-2 cursor-pointer font-bold text-sm">
-                                    <input type="radio" value="part" x-model="logForm.fuelType" class="accent-blue-600"> 부분주유
+                                <label class="flex items-center gap-2 cursor-pointer text-sm font-semibold">
+                                    <input type="radio" value="part" x-model="logForm.fuelType" class="accent-blue-600 w-4 h-4"> 부분주유
                                 </label>
                             </div>
+                            <div>
+                                <label class="label text-xs text-blue-800">총 결제금액</label>
+                                <input type="number" x-model="logForm.cost" placeholder="0" class="input font-bold text-right text-lg border-blue-200 focus:border-blue-500">
+                            </div>
                             <div class="grid grid-cols-2 gap-3">
-                                <div class="col-span-2">
-                                    <label class="label text-xs text-gray-600">총 결제금액</label>
-                                    <input type="number" x-model="logForm.cost" placeholder="원" class="input font-bold text-right text-lg">
+                                <div>
+                                    <label class="label text-xs text-blue-800">단가 (원/L)</label>
+                                    <input type="number" x-model="logForm.pricePerUnit" class="input text-right text-sm">
                                 </div>
                                 <div>
-                                    <label class="label text-xs text-gray-600">리터당 단가</label>
-                                    <input type="number" x-model="logForm.pricePerUnit" placeholder="원/L" class="input text-right">
-                                </div>
-                                <div>
-                                    <label class="label text-xs text-gray-600">주유량 (L)</label>
-                                    <input type="number" x-model="logForm.volume" placeholder="L" class="input text-right">
+                                    <label class="label text-xs text-blue-800">주유량 (L)</label>
+                                    <input type="number" x-model="logForm.volume" class="input text-right text-sm">
                                 </div>
                             </div>
                         </div>
                     </template>
 
-                    <!-- Tab Specific: Maint -->
                     <template x-if="activeTab === 'maint'">
-                        <div class="flex flex-col gap-4">
+                        <div class="flex flex-col gap-3">
                             <div class="flex gap-2">
-                                <select x-model="logForm.maintType" class="input w-1/3 font-bold">
+                                <select x-model="logForm.maintType" class="input w-28 font-bold text-sm">
                                     <option value="repair">정비</option>
                                     <option value="check">점검</option>
                                 </select>
-                                <input type="text" x-model="logForm.item" placeholder="정비 항목 (예: 엔진오일)" class="input w-2/3">
+                                <input type="text" x-model="logForm.item" placeholder="항목 (예: 엔진오일)" class="input flex-1">
                             </div>
                             <div>
                                 <label class="label">비용</label>
-                                <input type="number" x-model="logForm.cost" placeholder="원" class="input text-right font-bold">
+                                <input type="number" x-model="logForm.cost" placeholder="0" class="input text-right font-bold">
                             </div>
                         </div>
                     </template>
 
-                    <!-- Tab Specific: Other -->
                     <template x-if="activeTab === 'other'">
-                        <div class="flex flex-col gap-4">
+                        <div class="flex flex-col gap-3">
                             <div>
                                 <label class="label">지출 항목</label>
-                                <input type="text" x-model="logForm.item" placeholder="예: 세차비, 주차비" class="input">
+                                <input type="text" x-model="logForm.item" placeholder="예: 세차, 주차비" class="input">
                             </div>
                             <div>
                                 <label class="label">비용</label>
-                                <input type="number" x-model="logForm.cost" placeholder="원" class="input text-right font-bold">
+                                <input type="number" x-model="logForm.cost" placeholder="0" class="input text-right font-bold">
                             </div>
                         </div>
                     </template>
 
-                    <!-- Common: Place & Memo -->
-                    <div class="flex flex-col gap-4 border-t pt-4">
-                        <div>
+                    <!-- Common: Place (Custom Select) & Memo -->
+                    <div class="flex flex-col gap-3 border-t pt-4">
+                        <div class="custom-select-wrapper" @click.outside="showPlaceDropdown = false">
                             <label class="label">장소</label>
-                            <input type="text" x-model="logForm.place" list="placeOptions" class="input" placeholder="장소명 입력 또는 선택">
-                            <!-- Datalist inside modal to ensure visibility -->
-                            <datalist id="placeOptions">
-                                <template x-for="p in placeSuggestions" :key="p">
-                                    <option :value="p"></option>
+                            <div class="relative">
+                                <input type="text" x-model="logForm.place" @focus="showPlaceDropdown = true" @input="showPlaceDropdown = true" class="input pr-8" placeholder="장소 입력">
+                                <i class="ph ph-caret-down absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                            </div>
+                            
+                            <!-- Custom Dropdown -->
+                            <div x-show="showPlaceDropdown && filteredPlaces.length > 0" class="custom-select-dropdown">
+                                <template x-for="p in filteredPlaces" :key="p">
+                                    <div class="custom-select-option text-sm" @click="logForm.place = p; showPlaceDropdown = false" x-text="p"></div>
                                 </template>
-                            </datalist>
+                            </div>
                         </div>
                         <div>
                             <label class="label">메모</label>
-                            <input type="text" x-model="logForm.memo" class="input" placeholder="특이사항 메모">
+                            <input type="text" x-model="logForm.memo" class="input" placeholder="내용 입력">
                         </div>
                     </div>
 
-                    <button @click="saveLog()" class="btn btn-primary w-full py-3 text-lg mt-2 shadow-lg shadow-blue-200">
+                    <button @click="saveLog()" class="btn btn-primary w-full py-3 text-lg mt-2 shadow-lg shadow-blue-100">
                         저장하기
                     </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: Add Maintenance Rule Form -->
+        <div x-show="showRuleForm" class="modal-overlay hidden" :class="{ 'hidden': !showRuleForm }">
+             <div class="modal-content" @click.away="showRuleForm = false">
+                <div class="p-4 border-b flex justify-between items-center bg-gray-50">
+                    <h3 class="font-bold text-lg">정비 알림 추가</h3>
+                    <button @click="showRuleForm = false" class="text-gray-400"><i class="ph ph-x text-xl"></i></button>
+                </div>
+                <div class="p-5 flex flex-col gap-4">
+                    <div>
+                        <label class="label">정비 항목명</label>
+                        <input type="text" x-model="ruleForm.name" placeholder="예: 미션오일" class="input">
+                    </div>
+                    <div>
+                        <label class="label">교체 주기 (km)</label>
+                        <input type="number" x-model="ruleForm.km" placeholder="예: 40000" class="input">
+                    </div>
+                    <button @click="addRule()" class="btn btn-primary w-full mt-2">추가하기</button>
                 </div>
             </div>
         </div>
@@ -606,7 +671,11 @@
                 
                 // Form State
                 showAddForm: false,
+                showRuleForm: false,
+                showPlaceDropdown: false,
+                toggleFilter: false,
                 logForm: {},
+                ruleForm: { name: '', km: '' },
                 
                 // Filters
                 searchTerm: '',
@@ -614,7 +683,7 @@
                 filterDateEnd: '',
                 filterType: 'all',
                 page: 1,
-                itemsPerPage: 100,
+                itemsPerPage: 50, // Reduced for mobile scroll
 
                 init() {
                     this.db.init();
@@ -659,7 +728,15 @@
                     
                     const newCar = {
                         id: Date.now(),
-                        info: { number: number, maker: '', model: '', trim: '', year: '', fuel: 'gasoline', cc: '' },
+                        info: { 
+                            number: number, maker: '', model: '', trim: '', year: '', fuel: 'gasoline', cc: '',
+                            maintenanceRules: [ // Default Rules
+                                { name: '엔진오일', km: 10000 },
+                                { name: '타이어', km: 40000 },
+                                { name: '에어컨필터', km: 10000 },
+                                { name: '브레이크패드', km: 40000 }
+                            ]
+                        },
                         logs: { fuel: [], maint: [], other: [] }
                     };
                     this.db.data.vehicles.push(newCar);
@@ -668,6 +745,15 @@
 
                 selectVehicle(car) {
                     this.currentVehicle = car;
+                    // Migrate old data if rules missing
+                    if (!this.currentVehicle.info.maintenanceRules) {
+                        this.currentVehicle.info.maintenanceRules = [
+                            { name: '엔진오일', km: 10000 },
+                            { name: '타이어', km: 40000 },
+                            { name: '에어컨필터', km: 10000 },
+                            { name: '브레이크패드', km: 40000 }
+                        ];
+                    }
                     this.activeTab = 'info';
                     this.route = 'detail';
                     this.resetFilters();
@@ -700,6 +786,10 @@
                 },
 
                 // --- Log Logic ---
+                get hasActiveFilters() {
+                    return this.filterDateStart || this.filterDateEnd || (this.activeTab === 'maint' && this.filterType !== 'all');
+                },
+
                 get currentLogs() {
                     if (!this.currentVehicle) return [];
                     let logs = [];
@@ -731,15 +821,13 @@
                 // --- Form Handling ---
                 openAddForm() {
                     const today = new Date().toISOString().slice(0, 10);
-                    // Get latest odometer if available
                     const maxOdo = this.getMaxOdo();
                     
                     this.logForm = {
                         id: Date.now(),
                         date: today,
-                        odo: maxOdo || 0,
+                        odo: maxOdo || '',
                         place: '', memo: '', cost: '',
-                        // Defaults
                         fuelType: 'full', pricePerUnit: '', volume: '',
                         maintType: 'repair', item: ''
                     };
@@ -758,10 +846,8 @@
                 },
 
                 saveLog() {
-                    // Basic Validation
                     if (!this.logForm.date) return alert("날짜를 입력해주세요.");
                     
-                    // Logic based on tab
                     const tab = this.activeTab;
                     const log = { ...this.logForm, cost: Number(this.logForm.cost) || 0 };
 
@@ -799,40 +885,69 @@
                     this.db.save();
                 },
 
-                // --- Maintenance Timer ---
+                // --- Maintenance Timer Logic ---
                 get maintenanceCards() {
                     if (!this.currentVehicle) return [];
-                    const rules = [
-                        { name: '엔진오일', km: 10000 },
-                        { name: '타이어', km: 50000 },
-                        { name: '에어컨필터', km: 10000 },
-                        { name: '브레이크패드', km: 40000 }
-                    ];
-
+                    const rules = this.currentVehicle.info.maintenanceRules || [];
                     const currentOdo = this.getMaxOdo();
 
-                    return rules.map(rule => {
+                    return rules.map((rule, index) => {
+                        // Find last maintenance matching rule name
                         const lastMaint = this.currentVehicle.logs.maint
                             .filter(l => l.item && l.item.includes(rule.name))
                             .sort((a, b) => b.odo - a.odo)[0];
 
                         const lastOdo = lastMaint ? Number(lastMaint.odo) : 0;
-                        const nextKm = lastOdo + rule.km;
+                        const deferred = rule.deferred || 0;
+                        const nextKm = lastOdo + Number(rule.km) + deferred;
                         const remaining = nextKm - currentOdo;
                         
-                        // Calculate percentage used
                         let percent = 0;
                         if (currentOdo > lastOdo) {
-                            percent = Math.min(((currentOdo - lastOdo) / rule.km) * 100, 100);
+                            percent = Math.min(((currentOdo - lastOdo) / (Number(rule.km) + deferred)) * 100, 100);
                         }
-
+                        
                         return {
                             name: rule.name,
                             nextKm: nextKm,
                             remainingKm: remaining,
-                            percent: Math.floor(percent)
+                            interval: rule.km,
+                            deferred: deferred,
+                            percent: Math.floor(percent),
+                            originalIndex: index
                         };
                     }).sort((a, b) => b.percent - a.percent);
+                },
+
+                openAddRuleForm() {
+                    this.ruleForm = { name: '', km: '' };
+                    this.showRuleForm = true;
+                },
+
+                addRule() {
+                    if(!this.ruleForm.name || !this.ruleForm.km) return alert("내용을 입력해주세요.");
+                    this.currentVehicle.info.maintenanceRules.push({
+                        name: this.ruleForm.name,
+                        km: Number(this.ruleForm.km),
+                        deferred: 0
+                    });
+                    this.db.save();
+                    this.showRuleForm = false;
+                    this.showToast("타이머가 추가되었습니다.");
+                },
+
+                deleteRule(index) {
+                    if(confirm("이 알림을 삭제하시겠습니까?")) {
+                        this.currentVehicle.info.maintenanceRules.splice(index, 1);
+                        this.db.save();
+                    }
+                },
+
+                snoozeRule(index) {
+                    const rule = this.currentVehicle.info.maintenanceRules[index];
+                    rule.deferred = (rule.deferred || 0) + 1000;
+                    this.db.save();
+                    this.showToast(`${rule.name} 알림을 1,000km 미뤘습니다.`);
                 },
 
                 getMaxOdo() {
@@ -847,6 +962,12 @@
                 },
 
                 // --- Place Autocomplete Helpers ---
+                get filteredPlaces() {
+                    const input = (this.logForm.place || '').toLowerCase();
+                    const allPlaces = this.placeSuggestions;
+                    return allPlaces.filter(p => p.toLowerCase().includes(input));
+                },
+
                 get placeSuggestions() {
                     if (!this.currentVehicle) return [];
                     const places = new Set();
@@ -864,6 +985,7 @@
                     this.filterDateStart = '';
                     this.filterDateEnd = '';
                     this.page = 1;
+                    this.toggleFilter = false;
                 },
 
                 showToast(msg) {
@@ -874,8 +996,8 @@
                 }
             }));
         });
-
-        Alpine.start();
+		
+		Alpine.start();
     </script>
 </body>
 </html>
