@@ -103,7 +103,9 @@
 
     <!-- Alpine.js -->
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js" defer></script>
-	<link href=" https://cdn.jsdelivr.net/npm/lucide-static@0.563.0/font/lucide.min.css " rel="stylesheet">
+    
+    <!-- Icons (Lucide) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="bg-background text-foreground font-sans antialiased min-h-screen selection:bg-brand selection:text-white overflow-x-hidden"
       x-data="app()" x-cloak>
@@ -127,7 +129,7 @@
                 <template x-if="router.current === 'car-list'">
                     <div class="flex items-center gap-3 animate-in fade-in slide-in-from-left-2 duration-300">
                         <div class="w-9 h-9 rounded-lg bg-brand flex items-center justify-center text-white font-bold shadow-lg shadow-brand/20">
-                            <i class="icon-car-front w-5 h-5"></i>
+                            <i data-lucide="car-front" class="w-5 h-5"></i>
                         </div>
                         <h1 class="text-xl font-bold tracking-tight">Vehlog</h1>
                     </div>
@@ -138,7 +140,7 @@
                     <div class="flex items-center gap-3 animate-in fade-in slide-in-from-left-2 duration-300">
                         <button @click="router.current = 'car-list'" 
                                 class="w-9 h-9 rounded-md hover:bg-accent flex items-center justify-center transition-colors border border-transparent hover:border-border">
-                            <i class="icon-arrow-left w-5 h-5"></i>
+                            <i data-lucide="arrow-left" class="w-5 h-5"></i>
                         </button>
                         <div>
                             <h2 class="text-lg font-bold leading-none" x-text="activeCar?.number"></h2>
@@ -152,7 +154,7 @@
             <div class="flex gap-2">
                 <div x-data="{ open: false }" class="relative">
                     <button @click="open = !open" class="w-9 h-9 flex items-center justify-center rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition-colors">
-                        <i class="icon-settings w-5 h-5"></i>
+                        <i data-lucide="settings" class="w-5 h-5"></i>
                     </button>
                     
                     <div x-show="open" @click.outside="open = false" 
@@ -161,14 +163,14 @@
                          x-transition:enter-end="opacity-100 scale-100"
                          class="absolute right-0 mt-2 w-48 bg-popover border border-border rounded-lg shadow-xl py-1 z-50">
                         <button @click="exportDB(); open = false" class="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-accent text-left">
-                            <i class="icon-download w-4 h-4"></i> 내보내기 (JSON)
+                            <i data-lucide="download" class="w-4 h-4"></i> 내보내기 (JSON)
                         </button>
                         <button @click="triggerImport(); open = false" class="flex items-center gap-2 w-full px-4 py-2 text-sm hover:bg-accent text-left">
-                            <i class="icon-upload w-4 h-4"></i> 가져오기
+                            <i data-lucide="upload" class="w-4 h-4"></i> 가져오기
                         </button>
                         <div class="h-px bg-border my-1"></div>
                         <button @click="closeDatabase(); open = false" class="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-400 hover:bg-accent text-left">
-                            <i class="icon-log-out w-4 h-4"></i> 데이터베이스 닫기
+                            <i data-lucide="log-out" class="w-4 h-4"></i> 데이터베이스 닫기
                         </button>
                     </div>
                 </div>
@@ -181,7 +183,7 @@
               class="flex-1 flex flex-col justify-center items-center text-center pb-20">
             <div class="mb-8 relative">
                 <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-brand to-purple-600 flex items-center justify-center shadow-2xl shadow-brand/20">
-                    <i class="icon-database w-10 h-10 text-white"></i>
+                    <i data-lucide="database" class="w-10 h-10 text-white"></i>
                 </div>
             </div>
             
@@ -197,7 +199,7 @@
                 <button @click="createLocalDatabase()" 
                         class="group p-6 rounded-xl border border-border bg-card hover:bg-accent transition-all duration-300 text-left relative overflow-hidden">
                     <div class="w-10 h-10 rounded-full bg-secondary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                        <i class="icon-plus w-5 h-5"></i>
+                        <i data-lucide="plus" class="w-5 h-5"></i>
                     </div>
                     <h3 class="text-lg font-semibold mb-1">새 데이터베이스 만들기</h3>
                     <p class="text-sm text-muted-foreground">로컬 저장소에 새로운 차계부를 생성합니다.</p>
@@ -205,7 +207,7 @@
                 <button @click="openModal('webdav-config')"
                         class="group p-6 rounded-xl border border-border bg-card hover:bg-accent transition-all duration-300 text-left">
                     <div class="w-10 h-10 rounded-full bg-secondary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                        <i class="icon-globe w-5 h-5"></i>
+                        <i data-lucide="globe" class="w-5 h-5"></i>
                     </div>
                     <h3 class="text-lg font-semibold mb-1">WebDAV 연결하기</h3>
                     <p class="text-sm text-muted-foreground">기존 데이터를 불러옵니다.</p>
@@ -224,7 +226,7 @@
                 </div>
                 <button @click="openModal('add-car')" 
                         class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 shadow-sm">
-                    <i class="icon-plus w-4 h-4 mr-2"></i> 차량 추가
+                    <i data-lucide="plus" class="w-4 h-4 mr-2"></i> 차량 추가
                 </button>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -235,7 +237,7 @@
                             <div>
                                 <div class="flex justify-between items-start mb-2">
                                     <span class="inline-flex items-center rounded-md border border-border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-foreground" x-text="car.fuelType"></span>
-                                    <i class="icon-chevron-right w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors"></i>
+                                    <i data-lucide="chevron-right" class="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors"></i>
                                 </div>
                                 <h3 class="text-xl font-bold tracking-tight" x-text="car.number"></h3>
                                 <p class="text-muted-foreground text-sm" x-text="car.maker + ' ' + car.model"></p>
@@ -249,7 +251,7 @@
                 </template>
                 <template x-if="!db?.cars.length">
                     <div class="col-span-full py-20 flex flex-col items-center justify-center text-muted-foreground border border-dashed border-border rounded-xl bg-card/50">
-                        <i class="icon-car w-12 h-12 mb-4 opacity-50"></i>
+                        <i data-lucide="car" class="w-12 h-12 mb-4 opacity-50"></i>
                         <p class="text-lg font-medium">등록된 차량이 없습니다.</p>
                         <p class="text-sm mt-1">우측 상단의 버튼을 눌러 첫 차량을 등록해보세요.</p>
                     </div>
@@ -286,12 +288,12 @@
                     <div class="bg-card border border-border rounded-xl p-6">
                         <div class="flex justify-between items-center mb-6">
                             <h3 class="text-lg font-bold flex items-center gap-2">
-                                <i class="icon-info w-4 h-4 text-brand"></i> 기본 정보
+                                <i data-lucide="info" class="w-4 h-4 text-brand"></i> 기본 정보
                             </h3>
                             <button @click="toggleEditInfo()" 
                                     class="text-xs px-3 py-1.5 rounded-md border border-border hover:bg-accent transition-colors flex items-center gap-1.5"
                                     :class="detail.isEditing ? 'text-red-400 border-red-900/50 bg-red-900/10' : 'text-muted-foreground'">
-                                <i :class="detail.isEditing ? 'icon-x' : 'icon-pencil'" class="w-3 h-3"></i>
+                                <i :data-lucide="detail.isEditing ? 'x' : 'pencil'" class="w-3 h-3"></i>
                                 <span x-text="detail.isEditing ? '취소' : '편집'"></span>
                             </button>
                         </div>
@@ -357,7 +359,7 @@
                         
                         <!-- Search -->
                         <div class="relative flex-1">
-                            <i class="icon-search absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"></i>
+                            <i data-lucide="search" class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"></i>
                             <input type="text" x-model="filters.search" placeholder="검색..." 
                                    class="flex h-9 w-full rounded-md border border-input bg-transparent pl-9 pr-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50">
                         </div>
@@ -384,7 +386,7 @@
                         <!-- Add Button (Primary Action) -->
                         <button @click="openModal('add-record')" 
                                 class="inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 shadow whitespace-nowrap">
-                            <i class="icon-plus w-4 h-4 mr-2"></i> 
+                            <i data-lucide="plus" class="w-4 h-4 mr-2"></i> 
                             <span x-text="getAddButtonText()"></span>
                         </button>
                     </div>
@@ -411,7 +413,7 @@
                                     <div class="flex flex-col gap-0.5">
                                         <span class="font-medium truncate max-w-[200px]" x-text="getRecordLabel(record)"></span>
                                         <span class="text-xs text-muted-foreground flex items-center gap-1">
-                                            <i class="icon-map-pin w-3 h-3"></i>
+                                            <i data-lucide="map-pin" class="w-3 h-3"></i>
                                             <span x-text="record.place || '장소 미지정'"></span>
                                         </span>
                                     </div>
@@ -445,7 +447,7 @@
                         <template x-if="filteredRecords.length === 0">
                             <div class="text-center py-12">
                                 <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-secondary mb-4">
-                                    <i class="icon-inbox w-6 h-6 text-muted-foreground"></i>
+                                    <i data-lucide="inbox" class="w-6 h-6 text-muted-foreground"></i>
                                 </div>
                                 <p class="text-sm text-muted-foreground">내역이 없습니다.</p>
                             </div>
@@ -474,7 +476,7 @@
             
             <div class="p-6 border-b border-border flex justify-between items-center shrink-0">
                 <h3 class="text-lg font-semibold" x-text="getModalTitle()"></h3>
-                <button @click="closeModal()" class="text-muted-foreground hover:text-foreground"><i class="icon-x w-5 h-5"></i></button>
+                <button @click="closeModal()" class="text-muted-foreground hover:text-foreground"><i data-lucide="x" class="w-5 h-5"></i></button>
             </div>
 
             <div class="p-6 overflow-y-auto space-y-4">
@@ -656,8 +658,13 @@
                 toasts: [],
 
                 init() {
+                    this.$watch('router.current', () => this.$nextTick(() => lucide.createIcons()));
+                    this.$watch('modal.active', (v) => v && this.$nextTick(() => lucide.createIcons()));
+                    this.$watch('detail.tab', () => this.$nextTick(() => lucide.createIcons()));
+                    
                     const d = Backend.load();
                     if(d) { this.db = d; this.router.current = 'car-list'; }
+                    lucide.createIcons();
                 },
 
                 get activeCar() { return this.db?.cars.find(c => c.id === this.detail.carId) || null; },
