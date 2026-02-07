@@ -6,132 +6,185 @@
     <title>심플 차계부 (Car Logbook)</title>
     <link rel="stylesheet" href="https://unpkg.com/basecoat-ui/dist/basecoat.min.css">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     
     <style>
         :root {
             --primary: #2563eb;
+            --primary-dark: #1d4ed8;
             --bg-body: #f8fafc;
             --bg-card: #ffffff;
             --border: #e2e8f0;
+            --text-main: #1e293b;
+            --text-sub: #64748b;
         }
 
         body {
             background-color: var(--bg-body);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: var(--text-main);
+            font-family: 'Pretendard JP', sans-serif;
         }
+		
+		* {
+			box-sizing: border-box;
+			border-color: var(--border);
+		}
 
-        /* Utility Helpers compatible with Basecoat */
-        .container { max-width: 800px; margin: 0 auto; padding: 1rem; }
-        .hidden { display: none; }
-        .flex { display: flex; }
-        .flex-col { flex-direction: column; }
-        .justify-between { justify-content: space-between; }
-        .items-center { align-items: center; }
-        .gap-2 { gap: 0.5rem; }
-        .gap-4 { gap: 1rem; }
-        .mt-4 { margin-top: 1rem; }
-        .mb-4 { margin-bottom: 1rem; }
-        .p-4 { padding: 1rem; }
-        .w-full { width: 100%; }
-        .text-sm { font-size: 0.875rem; }
-        .font-bold { font-weight: 700; }
-        .text-gray { color: #64748b; }
-        .text-red { color: #ef4444; }
+        /* Utility Helpers */
+        .container { max-width: 800px; margin: 0 auto; padding: 1rem; position: relative; min-height: 100vh;}
 
         /* Component Styles */
         .card {
             background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 12px;
             padding: 1.5rem;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
 
         .btn {
             padding: 0.5rem 1rem;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
             border: 1px solid var(--border);
             background: white;
-            font-weight: 500;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
         }
+        .btn:hover { background-color: #f1f5f9; }
+        .btn:active { transform: translateY(1px); }
+        
         .btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
-        .btn-danger { background: #ef4444; color: white; border-color: #ef4444; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-danger { background: #fee2e2; color: #dc2626; border-color: #fecaca; }
+        
+        .btn-fab {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 3.5rem;
+            height: 3.5rem;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            z-index: 40;
+        }
 
         .input {
             width: 100%;
-            padding: 0.5rem;
+            padding: 0.6rem 0.8rem;
             border: 1px solid var(--border);
-            border-radius: 6px;
+            border-radius: 8px;
             margin-top: 0.25rem;
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+        }
+        .input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        
+        .label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 0.25rem;
         }
 
         /* Tabs */
-        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1rem; }
-        .tab { padding: 0.75rem 1.5rem; cursor: pointer; border-bottom: 2px solid transparent; }
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; gap: 1rem; overflow-x: auto;}
+        .tab { padding: 0.75rem 0.5rem; cursor: pointer; border-bottom: 3px solid transparent; color: var(--text-sub); white-space: nowrap; }
         .tab.active { border-bottom-color: var(--primary); color: var(--primary); font-weight: bold; }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            backdrop-filter: blur(2px);
+        }
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            animation: modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes modalPop {
+            0% { transform: scale(0.95); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
 
         /* Data Grid */
         .log-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Responsive columns */
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 1rem;
         }
         .log-item {
             background: white;
             border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 1rem;
+            border-radius: 10px;
+            padding: 1.25rem;
+            transition: transform 0.2s;
         }
+        .log-item:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
 
-        /* Horizontal Scroll for Maintenance Cards */
+        /* Maintenance Scroll */
         .maintenance-scroll {
             display: flex;
             overflow-x: auto;
             gap: 1rem;
-            padding-bottom: 1rem;
-            margin-bottom: 1rem;
+            padding: 0.5rem 0 1.5rem 0;
         }
         .maint-card {
-            min-width: 200px;
+            min-width: 220px;
             background: white;
             border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem;
+            border-radius: 12px;
+            padding: 1.25rem;
             flex-shrink: 0;
         }
-        .progress-bar {
-            height: 6px;
-            background: #e2e8f0;
-            border-radius: 3px;
-            margin-top: 0.5rem;
-            overflow: hidden;
-        }
-        .progress-fill { height: 100%; background: var(--primary); }
+        .progress-bar { height: 8px; background: #e2e8f0; border-radius: 4px; margin-top: 0.75rem; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--primary); transition: width 0.5s ease-out; }
 
-        /* Toast */
+        /* Toast & Banner */
         .toast {
             position: fixed;
-            bottom: 20px;
+            bottom: 24px;
             left: 50%;
             transform: translateX(-50%);
-            background: #333;
+            background: #1e293b;
             color: white;
-            padding: 10px 20px;
-            border-radius: 20px;
+            padding: 12px 24px;
+            border-radius: 50px;
             font-size: 0.9rem;
             z-index: 1000;
             opacity: 0;
             transition: opacity 0.3s;
             pointer-events: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
         .toast.show { opacity: 1; }
         
         .unsaved-banner {
             position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            bottom: 0; left: 0; right: 0;
             background: #fff7ed;
             border-top: 1px solid #fdba74;
             color: #9a3412;
@@ -141,8 +194,355 @@
             justify-content: center;
             gap: 10px;
             align-items: center;
+            z-index: 90;
         }
     </style>
+</head>
+<body>
+    <div x-data="app" class="container">
+        
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-6">
+            <h1 class="font-bold text-xl flex items-center gap-2 text-blue-600">
+                <i class="ph ph-car-profile text-2xl" style="color: var(--primary)"></i> 
+                <span>차계부</span>
+            </h1>
+            <div x-show="route !== 'home'">
+                <button @click="goBack()" class="btn text-sm"><i class="ph ph-arrow-left"></i> 목록으로</button>
+            </div>
+        </header>
+
+        <!-- View: Home -->
+        <div x-show="route === 'home'" class="flex flex-col gap-4 max-w-md mx-auto mt-10">
+            <div class="card p-8 text-center">
+                <div class="mb-6 flex justify-center">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
+                        <i class="ph ph-garage text-3xl"></i>
+                    </div>
+                </div>
+                <h2 class="font-bold text-2xl mb-2">환영합니다!</h2>
+                <p class="mb-8 text-gray">차량 관리를 시작할 데이터베이스를 선택하세요.</p>
+                <div class="flex flex-col gap-3">
+                    <button @click="openDB('local')" class="btn btn-primary py-3">
+                        <i class="ph ph-device-mobile"></i> 내 기기에서 시작 (LocalStorage)
+                    </button>
+                    <button @click="createDB()" class="btn text-red py-3">
+                        <i class="ph ph-trash"></i> 데이터 초기화 / 새로 만들기
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- View: List -->
+        <div x-show="route === 'list'" class="flex flex-col gap-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="font-bold text-xl">내 차량 목록</h2>
+                    <p class="text-sm text-gray">관리할 차량을 선택하세요</p>
+                </div>
+                <button @click="addVehicle()" class="btn btn-primary"><i class="ph ph-plus"></i> 차량 추가</button>
+            </div>
+
+            <div class="grid gap-4">
+                <template x-for="(car, index) in db.data.vehicles" :key="car.id">
+                    <div class="card flex justify-between items-center hover:shadow-md transition-shadow cursor-pointer" @click="selectVehicle(car)">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-500">
+                                <i class="ph ph-car text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg" x-text="car.info.number"></h3>
+                                <p class="text-sm text-gray" x-text="[car.info.maker, car.info.model].filter(Boolean).join(' ') || '정보 없음'"></p>
+                            </div>
+                        </div>
+                        <button @click.stop="deleteVehicle(index)" class="btn btn-danger p-2 rounded-full"><i class="ph ph-trash"></i></button>
+                    </div>
+                </template>
+            </div>
+            
+            <div x-show="db.data.vehicles.length === 0" class="text-center py-10 text-gray bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                <i class="ph ph-car text-3xl mb-2 block"></i>
+                등록된 차량이 없습니다.
+            </div>
+
+            <div class="card p-4 mt-4 bg-gray-50 border-none">
+                <h4 class="font-bold text-sm mb-2 text-gray-700">데이터 백업/복원</h4>
+                <div class="flex gap-2">
+                    <button @click="exportDB()" class="btn text-sm bg-white"><i class="ph ph-download-simple"></i> 내보내기</button>
+                    <label class="btn text-sm bg-white cursor-pointer">
+                        <i class="ph ph-upload-simple"></i> 가져오기
+                        <input type="file" class="hidden" @change="importDB">
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- View: Detail -->
+        <div x-show="route === 'detail'" class="w-full pb-20">
+            <!-- Tabs -->
+            <div class="tabs sticky top-0 bg-body z-10 pt-2">
+                <div class="tab" :class="{ 'active': activeTab === 'info' }" @click="activeTab = 'info'">차량정보</div>
+                <div class="tab" :class="{ 'active': activeTab === 'fuel' }" @click="activeTab = 'fuel'">주유기록</div>
+                <div class="tab" :class="{ 'active': activeTab === 'maint' }" @click="activeTab = 'maint'">정비내역</div>
+                <div class="tab" :class="{ 'active': activeTab === 'other' }" @click="activeTab = 'other'">기타지출</div>
+            </div>
+
+            <!-- Tab: Info -->
+            <div x-show="activeTab === 'info'" class="card">
+                <h3 class="font-bold mb-6 text-lg">기본 정보 수정</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div><label class="label">차량번호</label><input type="text" x-model="currentVehicle.info.number" class="input"></div>
+                    <div><label class="label">제조사</label><input type="text" x-model="currentVehicle.info.maker" class="input"></div>
+                    <div><label class="label">차종</label><input type="text" x-model="currentVehicle.info.model" class="input"></div>
+                    <div><label class="label">등급</label><input type="text" x-model="currentVehicle.info.trim" class="input"></div>
+                    <div><label class="label">연식</label><input type="number" x-model="currentVehicle.info.year" class="input"></div>
+                    <div>
+                        <label class="label">연료</label>
+                        <select x-model="currentVehicle.info.fuel" class="input">
+                            <option value="gasoline">휘발유</option>
+                            <option value="diesel">경유</option>
+                            <option value="lpg">LPG</option>
+                            <option value="electric">전기</option>
+                            <option value="hybrid">하이브리드</option>
+                        </select>
+                    </div>
+                    <div><label class="label">배기량(cc)</label><input type="number" x-model="currentVehicle.info.cc" class="input"></div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div x-show="activeTab !== 'info'" class="mb-6">
+                <div class="card p-4 bg-white">
+                    <div class="flex flex-col gap-3">
+                        <div class="relative">
+                            <i class="ph ph-magnifying-glass absolute left-3 top-3 text-gray-400"></i>
+                            <input type="text" x-model="searchTerm" placeholder="검색 (장소, 항목, 메모)" class="input pl-10" style="padding-left: 2.5rem;">
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="date" x-model="filterDateStart" class="input text-sm">
+                            <input type="date" x-model="filterDateEnd" class="input text-sm">
+                        </div>
+                        <div x-show="activeTab === 'maint'" class="flex gap-3 items-center text-sm pt-2 border-t mt-1">
+                            <span class="font-bold text-gray-600">보기:</span>
+                            <label class="flex items-center gap-1 cursor-pointer"><input type="radio" value="all" x-model="filterType"> 전체</label>
+                            <label class="flex items-center gap-1 cursor-pointer"><input type="radio" value="repair" x-model="filterType"> 정비</label>
+                            <label class="flex items-center gap-1 cursor-pointer"><input type="radio" value="check" x-model="filterType"> 점검</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Maintenance Timer -->
+            <div x-show="activeTab === 'maint'" class="mb-6">
+                <div class="flex justify-between items-end mb-2 px-1">
+                    <h4 class="font-bold text-gray-700">정비 알림</h4>
+                    <span class="text-xs text-gray">교체주기 임박순</span>
+                </div>
+                <div class="maintenance-scroll">
+                    <template x-for="card in maintenanceCards">
+                        <div class="maint-card shadow-sm">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="font-bold text-lg" x-text="card.name"></span>
+                                <span class="text-xs font-bold px-2 py-1 rounded bg-red-100 text-red-600" x-show="card.percent >= 90">임박</span>
+                            </div>
+                            <div class="text-sm text-gray-600 mb-1" x-text="'다음 교체: ' + card.nextKm.toLocaleString() + 'km'"></div>
+                            <div class="text-xs text-gray-400" x-text="'(남은 거리: ' + card.remainingKm.toLocaleString() + 'km)'"></div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" :style="'width: ' + card.percent + '%'" :class="{'bg-red-500': card.percent >= 90}"></div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- Log List -->
+            <div x-show="activeTab !== 'info'" class="log-grid pb-20">
+                <template x-for="log in paginatedLogs" :key="log.id">
+                    <div class="log-item relative group">
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <div class="font-bold text-lg text-gray-800" x-text="log.date"></div>
+                                <div class="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
+                                    <i class="ph ph-gauge"></i> <span x-text="Number(log.odo).toLocaleString() + ' km'"></span>
+                                </div>
+                            </div>
+                            <button @click="removeLog(activeTab, log.id)" class="text-gray-300 hover:text-red-500 p-1"><i class="ph ph-trash text-lg"></i></button>
+                        </div>
+                        
+                        <!-- Log Content -->
+                        <div class="bg-gray-50 rounded p-3 mb-2">
+                            <!-- Fuel -->
+                            <div x-show="activeTab === 'fuel'">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="font-bold text-blue-600" x-text="Number(log.cost).toLocaleString() + '원'"></span>
+                                    <span class="text-sm bg-white border px-2 rounded" x-text="log.fuelType === 'full' ? '가득' : '부분'"></span>
+                                </div>
+                                <div class="text-sm text-gray-600 flex justify-between">
+                                    <span x-text="log.volume + 'L'"></span>
+                                    <span x-text="'@ ' + Number(log.pricePerUnit).toLocaleString() + '원'"></span>
+                                </div>
+                                <div class="mt-2 text-xs text-green-700 font-bold flex items-center gap-1" x-show="log.efficiency">
+                                    <i class="ph ph-trend-up"></i> 연비: <span x-text="log.efficiency"></span> km/L
+                                </div>
+                            </div>
+                            <!-- Maint -->
+                            <div x-show="activeTab === 'maint'">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="font-bold text-gray-800" x-text="log.item"></span>
+                                    <span class="font-bold text-blue-600" x-text="Number(log.cost).toLocaleString() + '원'"></span>
+                                </div>
+                                <div class="text-xs text-gray-500 badge inline-block px-2 py-0.5 rounded bg-gray-200" x-text="log.maintType === 'repair' ? '정비' : '점검'"></div>
+                            </div>
+                            <!-- Other -->
+                            <div x-show="activeTab === 'other'">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="font-bold text-gray-800" x-text="log.item"></span>
+                                    <span class="font-bold text-blue-600" x-text="Number(log.cost).toLocaleString() + '원'"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center text-sm text-gray-500">
+                            <div class="flex items-center gap-1 text-xs">
+                                <i class="ph ph-map-pin" x-show="log.place"></i>
+                                <span x-text="log.place"></span>
+                            </div>
+                        </div>
+                         <div x-show="log.memo" class="mt-2 text-xs text-gray-500 border-t pt-2 border-dashed">
+                            <i class="ph ph-note-pencil mr-1"></i> <span x-text="log.memo"></span>
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Floating Action Button for Add -->
+            <button x-show="activeTab !== 'info'" @click="openAddForm()" class="btn-fab transition-transform hover:scale-110 active:scale-95">
+                <i class="ph ph-plus"></i>
+            </button>
+
+            <!-- Pagination -->
+            <div x-show="activeTab !== 'info' && currentLogs.length > itemsPerPage" class="flex justify-center gap-2 mt-6 pb-20">
+                <button @click="page--" :disabled="page === 1" class="btn text-sm">이전</button>
+                <span class="p-2 font-bold text-gray-600" x-text="page"></span>
+                <button @click="page++" :disabled="paginatedLogs.length < itemsPerPage" class="btn text-sm">다음</button>
+            </div>
+        </div>
+
+        <!-- MODAL: Add Log Form -->
+        <div x-show="showAddForm" class="modal-overlay hidden" :class="{ 'hidden': !showAddForm }">
+            <div class="modal-content" @click.away="closeAddForm()">
+                <div class="p-4 border-b flex justify-between items-center bg-gray-50">
+                    <h3 class="font-bold text-lg" x-text="getTabName() + ' 기록 추가'"></h3>
+                    <button @click="closeAddForm()" class="text-gray-400 hover:text-gray-600"><i class="ph ph-x text-xl"></i></button>
+                </div>
+                
+                <div class="p-6 flex flex-col gap-5">
+                    <!-- Common: Date & Odo -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="label">날짜</label>
+                            <input type="date" x-model="logForm.date" class="input">
+                        </div>
+                        <div>
+                            <label class="label">누적주행거리 (km)</label>
+                            <input type="number" x-model="logForm.odo" class="input" placeholder="ex) 15000">
+                        </div>
+                    </div>
+
+                    <!-- Tab Specific: Fuel -->
+                    <template x-if="activeTab === 'fuel'">
+                        <div class="flex flex-col gap-4 py-4">
+                            <div class="flex gap-4 mb-1">
+                                <label class="flex items-center gap-2 cursor-pointer font-bold text-sm">
+                                    <input type="radio" value="full" x-model="logForm.fuelType" class="accent-blue-600"> 가득(상한)
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer font-bold text-sm">
+                                    <input type="radio" value="part" x-model="logForm.fuelType" class="accent-blue-600"> 부분주유
+                                </label>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="col-span-2">
+                                    <label class="label text-xs text-gray-600">총 결제금액</label>
+                                    <input type="number" x-model="logForm.cost" placeholder="원" class="input font-bold text-right text-lg">
+                                </div>
+                                <div>
+                                    <label class="label text-xs text-gray-600">리터당 단가</label>
+                                    <input type="number" x-model="logForm.pricePerUnit" placeholder="원/L" class="input text-right">
+                                </div>
+                                <div>
+                                    <label class="label text-xs text-gray-600">주유량 (L)</label>
+                                    <input type="number" x-model="logForm.volume" placeholder="L" class="input text-right">
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Tab Specific: Maint -->
+                    <template x-if="activeTab === 'maint'">
+                        <div class="flex flex-col gap-4">
+                            <div class="flex gap-2">
+                                <select x-model="logForm.maintType" class="input w-1/3 font-bold">
+                                    <option value="repair">정비</option>
+                                    <option value="check">점검</option>
+                                </select>
+                                <input type="text" x-model="logForm.item" placeholder="정비 항목 (예: 엔진오일)" class="input w-2/3">
+                            </div>
+                            <div>
+                                <label class="label">비용</label>
+                                <input type="number" x-model="logForm.cost" placeholder="원" class="input text-right font-bold">
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Tab Specific: Other -->
+                    <template x-if="activeTab === 'other'">
+                        <div class="flex flex-col gap-4">
+                            <div>
+                                <label class="label">지출 항목</label>
+                                <input type="text" x-model="logForm.item" placeholder="예: 세차비, 주차비" class="input">
+                            </div>
+                            <div>
+                                <label class="label">비용</label>
+                                <input type="number" x-model="logForm.cost" placeholder="원" class="input text-right font-bold">
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Common: Place & Memo -->
+                    <div class="flex flex-col gap-4 border-t pt-4">
+                        <div>
+                            <label class="label">장소</label>
+                            <input type="text" x-model="logForm.place" list="placeOptions" class="input" placeholder="장소명 입력 또는 선택">
+                            <!-- Datalist inside modal to ensure visibility -->
+                            <datalist id="placeOptions">
+                                <template x-for="p in placeSuggestions" :key="p">
+                                    <option :value="p"></option>
+                                </template>
+                            </datalist>
+                        </div>
+                        <div>
+                            <label class="label">메모</label>
+                            <input type="text" x-model="logForm.memo" class="input" placeholder="특이사항 메모">
+                        </div>
+                    </div>
+
+                    <button @click="saveLog()" class="btn btn-primary w-full py-3 text-lg mt-2 shadow-lg shadow-blue-200">
+                        저장하기
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast -->
+        <div id="toast" class="toast" x-text="toastMsg"></div>
+        
+        <!-- Unsaved Banner -->
+        <div x-show="showUnsaved" class="unsaved-banner hidden" :class="{ 'hidden': !showUnsaved }">
+            <i class="ph ph-warning"></i> 저장되지 않은 변경사항이 있습니다.
+            <button @click="db.save()" class="btn text-xs bg-white border-orange-300">지금 저장</button>
+        </div>
+
+    </div>
 
     <script type="module">
         import Alpine from 'https://esm.sh/alpinejs';
@@ -150,8 +550,7 @@
         // --- Backend Abstraction ---
         class DataManager {
             constructor() {
-                this.type = 'local'; // local or webdav
-                this.webdavConfig = null;
+                this.type = 'local';
                 this.data = { vehicles: [] };
                 this.isDirty = false;
             }
@@ -159,7 +558,9 @@
             init() {
                 const saved = localStorage.getItem('carlog_db');
                 if (saved) {
-                    this.data = JSON.parse(saved);
+                    try {
+                        this.data = JSON.parse(saved);
+                    } catch(e) { console.error("Data parse error", e); }
                 }
             }
 
@@ -189,41 +590,35 @@
                     this.isDirty = false;
                 } else {
                     this.isDirty = true;
-                    // WebDAV logic would go here (fetch PUT)
-                    console.log('WebDAV mode: waiting for manual save or implementation');
+                    // WebDAV logic stub
                 }
             }
         }
 
-        // --- Main App Logic ---
         document.addEventListener('alpine:init', () => {
             Alpine.data('app', () => ({
-                // State
-                route: 'home', // home, list, detail
+                route: 'home',
                 db: new DataManager(),
                 currentVehicle: null,
-                activeTab: 'info', // info, fuel, maint, other
+                activeTab: 'info',
                 showUnsaved: false,
                 toastMsg: '',
                 
-                // Form/Modal State
-                newVehicleName: '',
-                isEditingLog: false,
-                logForm: {}, // Generic form for logs
-
-                // Filters & Pagination
+                // Form State
+                showAddForm: false,
+                logForm: {},
+                
+                // Filters
                 searchTerm: '',
                 filterDateStart: '',
                 filterDateEnd: '',
-                filterType: 'all', // For maintenance toggle
+                filterType: 'all',
                 page: 1,
                 itemsPerPage: 100,
 
                 init() {
                     this.db.init();
-                    
-                    // Autosave Watcher
-                    this.$watch('db.data', (val) => {
+                    this.$watch('db.data', () => {
                         this.db.save();
                         this.checkUnsaved();
                     });
@@ -233,14 +628,12 @@
                     this.showUnsaved = (this.db.type === 'webdav' && this.db.isDirty);
                 },
 
-                // --- Routing ---
                 openDB(type) {
                     this.db.type = type;
                     if (type === 'webdav') {
-                        // Mock WebDAV setup
-                        const url = prompt("WebDAV URL을 입력하세요 (예: https://cloud.example.com/car.json)");
+                        const url = prompt("WebDAV URL:");
                         if(url) {
-                            alert("WebDAV 연결은 이 데모에서 로컬스토리지로 시뮬레이션됩니다.");
+                            alert("WebDAV 데모 모드");
                             this.route = 'list';
                         }
                     } else {
@@ -249,7 +642,7 @@
                 },
 
                 createDB() {
-                    if(confirm("기존 데이터가 있다면 초기화됩니다. 계속하시겠습니까?")) {
+                    if(confirm("기존 데이터가 초기화됩니다.")) {
                         this.db.reset();
                         this.route = 'list';
                     }
@@ -260,22 +653,14 @@
                     else if (this.route === 'list') this.route = 'home';
                 },
 
-                // --- Vehicle Management ---
                 addVehicle() {
-                    const number = prompt("차량 번호를 입력하세요:");
+                    const number = prompt("차량 번호 입력:");
                     if (!number) return;
                     
                     const newCar = {
                         id: Date.now(),
-                        info: {
-                            number: number,
-                            maker: '', model: '', trim: '', year: '', fuel: 'gasoline', cc: ''
-                        },
-                        logs: {
-                            fuel: [],
-                            maint: [],
-                            other: []
-                        }
+                        info: { number: number, maker: '', model: '', trim: '', year: '', fuel: 'gasoline', cc: '' },
+                        logs: { fuel: [], maint: [], other: [] }
                     };
                     this.db.data.vehicles.push(newCar);
                     this.db.save();
@@ -289,19 +674,18 @@
                 },
 
                 deleteVehicle(index) {
-                    if(confirm("이 차량과 모든 기록을 삭제하시겠습니까?")) {
+                    if(confirm("정말 삭제하시겠습니까?")) {
                         this.db.data.vehicles.splice(index, 1);
                         this.db.save();
                     }
                 },
 
                 exportDB() {
-                    const data = this.db.exportData();
-                    const blob = new Blob([data], {type: 'application/json'});
+                    const blob = new Blob([this.db.exportData()], {type: 'application/json'});
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = `carlog_backup_${new Date().toISOString().slice(0,10)}.json`;
+                    a.download = `carlog_${new Date().toISOString().slice(0,10)}.json`;
                     a.click();
                 },
 
@@ -310,23 +694,19 @@
                     if (!file) return;
                     const reader = new FileReader();
                     reader.onload = (e) => {
-                        if(this.db.importData(e.target.result)) {
-                            this.showToast("데이터를 성공적으로 불러왔습니다.");
-                        }
+                        if(this.db.importData(e.target.result)) this.showToast("데이터 복원 완료");
                     };
                     reader.readAsText(file);
                 },
 
-                // --- Log Logic (Fuel, Maint, Other) ---
+                // --- Log Logic ---
                 get currentLogs() {
                     if (!this.currentVehicle) return [];
                     let logs = [];
-                    
                     if (this.activeTab === 'fuel') logs = this.currentVehicle.logs.fuel;
                     else if (this.activeTab === 'maint') logs = this.currentVehicle.logs.maint;
                     else if (this.activeTab === 'other') logs = this.currentVehicle.logs.other;
                     
-                    // Filter
                     return logs.filter(log => {
                         const dateMatch = (!this.filterDateStart || log.date >= this.filterDateStart) &&
                                           (!this.filterDateEnd || log.date <= this.filterDateEnd);
@@ -340,7 +720,7 @@
                         const searchMatch = !this.searchTerm || searchTarget.includes(this.searchTerm.toLowerCase());
 
                         return dateMatch && typeMatch && searchMatch;
-                    }).sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort DESC
+                    }).sort((a, b) => new Date(b.date) - new Date(a.date));
                 },
 
                 get paginatedLogs() {
@@ -348,121 +728,135 @@
                     return this.currentLogs.slice(start, start + this.itemsPerPage);
                 },
 
-                // --- Add/Edit Log ---
-                initLogForm(type) {
+                // --- Form Handling ---
+                openAddForm() {
+                    const today = new Date().toISOString().slice(0, 10);
+                    // Get latest odometer if available
+                    const maxOdo = this.getMaxOdo();
+                    
                     this.logForm = {
                         id: Date.now(),
-                        date: new Date().toISOString().slice(0, 10),
-                        odo: 0,
-                        place: '',
-                        memo: '',
-                        cost: 0,
-                        // Specific fields
-                        fuelType: 'full', pricePerUnit: 0, volume: 0, isCut: false, // Fuel
-                        maintType: 'repair', item: '', // Maint
-                        title: '' // Other
+                        date: today,
+                        odo: maxOdo || 0,
+                        place: '', memo: '', cost: '',
+                        // Defaults
+                        fuelType: 'full', pricePerUnit: '', volume: '',
+                        maintType: 'repair', item: ''
                     };
+                    this.showAddForm = true;
                 },
 
-                addLog(tab) {
-                    // Simple prompt-based or dedicated section implementation?
-                    // Let's do a direct push for simplicity in this demo, but normally a modal.
-                    // Here we will toggle a "Add Mode" in the UI section.
-                    if (!this.logForm.date) this.initLogForm();
+                closeAddForm() {
+                    this.showAddForm = false;
+                },
+
+                getTabName() {
+                    if (this.activeTab === 'fuel') return '주유';
+                    if (this.activeTab === 'maint') return '정비';
+                    if (this.activeTab === 'other') return '지출';
+                    return '';
+                },
+
+                saveLog() {
+                    // Basic Validation
+                    if (!this.logForm.date) return alert("날짜를 입력해주세요.");
                     
-                    // Validation & Logic
+                    // Logic based on tab
+                    const tab = this.activeTab;
+                    const log = { ...this.logForm, cost: Number(this.logForm.cost) || 0 };
+
                     if (tab === 'fuel') {
-                        // Calculate Efficiency
+                        // Efficiency Calc
                         const prevFull = this.currentVehicle.logs.fuel
-                            .filter(l => l.fuelType === 'full' && l.date < this.logForm.date)
+                            .filter(l => l.fuelType === 'full' && l.date < log.date)
                             .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
                         
-                        if (prevFull && this.logForm.fuelType === 'full') {
-                            const dist = this.logForm.odo - prevFull.odo;
-                            this.logForm.efficiency = (dist / this.logForm.volume).toFixed(1);
-                            this.logForm.distance = dist;
+                        if (prevFull && log.fuelType === 'full' && log.volume > 0) {
+                            const dist = log.odo - prevFull.odo;
+                            if (dist > 0) {
+                                log.efficiency = (dist / log.volume).toFixed(1);
+                                log.distance = dist;
+                            }
                         }
-                        this.currentVehicle.logs.fuel.push({...this.logForm});
+                        this.currentVehicle.logs.fuel.push(log);
                     } else if (tab === 'maint') {
-                        this.currentVehicle.logs.maint.push({...this.logForm});
+                        if (!log.item) return alert("정비 항목을 입력해주세요.");
+                        this.currentVehicle.logs.maint.push(log);
                     } else {
-                        this.currentVehicle.logs.other.push({...this.logForm});
+                        if (!log.item) return alert("지출 항목을 입력해주세요.");
+                        this.currentVehicle.logs.other.push(log);
                     }
-                    
+
                     this.db.save();
-                    this.initLogForm(); // Reset
-                    this.showToast("기록이 추가되었습니다.");
+                    this.closeAddForm();
+                    this.showToast("저장되었습니다.");
                 },
 
                 removeLog(tab, id) {
                     if(!confirm("삭제하시겠습니까?")) return;
-                    if (tab === 'fuel') {
-                        this.currentVehicle.logs.fuel = this.currentVehicle.logs.fuel.filter(l => l.id !== id);
-                    } else if (tab === 'maint') {
-                        this.currentVehicle.logs.maint = this.currentVehicle.logs.maint.filter(l => l.id !== id);
-                    } else {
-                        this.currentVehicle.logs.other = this.currentVehicle.logs.other.filter(l => l.id !== id);
-                    }
+                    const target = this.currentVehicle.logs[tab];
+                    this.currentVehicle.logs[tab] = target.filter(l => l.id !== id);
                     this.db.save();
                 },
 
-                // --- Maint Timer Logic ---
+                // --- Maintenance Timer ---
                 get maintenanceCards() {
                     if (!this.currentVehicle) return [];
-                    // Example Rules (In a real app, these would be user-defined settings)
                     const rules = [
-                        { name: '엔진오일', km: 10000, months: 12 },
-                        { name: '타이어', km: 50000, months: 48 },
-                        { name: '에어컨필터', km: 10000, months: 6 }
+                        { name: '엔진오일', km: 10000 },
+                        { name: '타이어', km: 50000 },
+                        { name: '에어컨필터', km: 10000 },
+                        { name: '브레이크패드', km: 40000 }
                     ];
 
-                    const cards = rules.map(rule => {
-                        // Find last maintenance of this item
+                    const currentOdo = this.getMaxOdo();
+
+                    return rules.map(rule => {
                         const lastMaint = this.currentVehicle.logs.maint
-                            .filter(l => l.item.includes(rule.name))
-                            .sort((a, b) => b.odo - a.odo)[0]; // Sort by ODO
+                            .filter(l => l.item && l.item.includes(rule.name))
+                            .sort((a, b) => b.odo - a.odo)[0];
 
-                        const lastOdo = lastMaint ? parseInt(lastMaint.odo) : 0;
-                        const lastDate = lastMaint ? new Date(lastMaint.date) : new Date(this.currentVehicle.info.year + '-01-01'); // Fallback to year
-
-                        const currentOdo = this.getMaxOdo();
+                        const lastOdo = lastMaint ? Number(lastMaint.odo) : 0;
+                        const nextKm = lastOdo + rule.km;
+                        const remaining = nextKm - currentOdo;
                         
-                        // Calculate % based on KM
-                        const distDiff = currentOdo - lastOdo;
-                        const kmPercent = Math.min((distDiff / rule.km) * 100, 100);
+                        // Calculate percentage used
+                        let percent = 0;
+                        if (currentOdo > lastOdo) {
+                            percent = Math.min(((currentOdo - lastOdo) / rule.km) * 100, 100);
+                        }
 
                         return {
                             name: rule.name,
-                            nextKm: lastOdo + rule.km,
-                            remainingKm: (lastOdo + rule.km) - currentOdo,
-                            percent: kmPercent
+                            nextKm: nextKm,
+                            remainingKm: remaining,
+                            percent: Math.floor(percent)
                         };
-                    });
-
-                    // Sort by most urgent (highest percentage)
-                    return cards.sort((a, b) => b.percent - a.percent);
+                    }).sort((a, b) => b.percent - a.percent);
                 },
 
                 getMaxOdo() {
-                    // Get max odometer from all logs
-                    const logs = [
+                    if (!this.currentVehicle) return 0;
+                    const allLogs = [
                         ...this.currentVehicle.logs.fuel,
                         ...this.currentVehicle.logs.maint,
                         ...this.currentVehicle.logs.other
                     ];
-                    if (logs.length === 0) return 0;
-                    return Math.max(...logs.map(l => parseInt(l.odo) || 0));
+                    if (allLogs.length === 0) return 0;
+                    return Math.max(...allLogs.map(l => Number(l.odo) || 0));
                 },
 
-                // --- Helpers ---
-                getAllPlaces() {
+                // --- Place Autocomplete Helpers ---
+                get placeSuggestions() {
                     if (!this.currentVehicle) return [];
                     const places = new Set();
-                    const scan = (arr) => arr.forEach(x => { if(x.place) places.add(x.place) });
-                    scan(this.currentVehicle.logs.fuel);
-                    scan(this.currentVehicle.logs.maint);
-                    scan(this.currentVehicle.logs.other);
-                    return Array.from(places);
+                    const add = (arr) => arr.forEach(x => { if(x.place) places.add(x.place) });
+                    
+                    add(this.currentVehicle.logs.fuel);
+                    add(this.currentVehicle.logs.maint);
+                    add(this.currentVehicle.logs.other);
+                    
+                    return Array.from(places).sort();
                 },
 
                 resetFilters() {
@@ -480,229 +874,7 @@
                 }
             }));
         });
-    </script>
-</head>
-<body>
-    <div x-data="app" class="container">
-        
-        <header class="flex justify-between items-center mb-4 p-4 card">
-            <h1 class="font-bold text-lg"><i class="ph ph-car"></i> 차계부</h1>
-            <div x-show="route !== 'home'">
-                <button @click="goBack()" class="btn"><i class="ph ph-arrow-left"></i> 뒤로</button>
-            </div>
-        </header>
 
-        <div x-show="route === 'home'" class="flex flex-col gap-4">
-            <div class="card p-4 text-center">
-                <h2 class="font-bold text-xl mb-4">환영합니다!</h2>
-                <p class="mb-4 text-gray">데이터베이스를 선택하여 시작하세요.</p>
-                <div class="flex flex-col gap-2">
-                    <button @click="openDB('local')" class="btn btn-primary">
-                        <i class="ph ph-device-mobile"></i> 내 기기에서 열기 (LocalStorage)
-                    </button>
-                    <button @click="createDB()" class="btn text-red">
-                        <i class="ph ph-trash"></i> 데이터 초기화 / 새로 만들기
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div x-show="route === 'list'" class="flex flex-col gap-4">
-            <div class="flex justify-between items-center">
-                <h2 class="font-bold">내 차량 목록</h2>
-                <button @click="addVehicle()" class="btn btn-primary"><i class="ph ph-plus"></i> 추가</button>
-            </div>
-
-            <template x-for="(car, index) in db.data.vehicles" :key="car.id">
-                <div class="card flex justify-between items-center">
-                    <div @click="selectVehicle(car)" class="cursor-pointer flex-grow">
-                        <h3 class="font-bold" x-text="car.info.number"></h3>
-                        <p class="text-sm text-gray" x-text="(car.info.maker || '제조사 미입력') + ' ' + (car.info.model || '')"></p>
-                    </div>
-                    <button @click="deleteVehicle(index)" class="btn text-red"><i class="ph ph-trash"></i></button>
-                </div>
-            </template>
-            <div x-show="db.data.vehicles.length === 0" class="text-center text-gray p-4">
-                등록된 차량이 없습니다.
-            </div>
-
-            <hr class="border-t border-gray-200 my-4">
-            
-            <div class="card p-4">
-                <h4 class="font-bold mb-2">데이터 관리</h4>
-                <div class="flex gap-2">
-                    <button @click="exportDB()" class="btn text-sm">내보내기 (JSON)</button>
-                    <label class="btn text-sm cursor-pointer">
-                        가져오기
-                        <input type="file" class="hidden" @change="importDB">
-                    </label>
-                </div>
-            </div>
-        </div>
-
-        <div x-show="route === 'detail'" class="w-full">
-            <div class="tabs">
-                <div class="tab" :class="{ 'active': activeTab === 'info' }" @click="activeTab = 'info'">정보</div>
-                <div class="tab" :class="{ 'active': activeTab === 'fuel' }" @click="activeTab = 'fuel'; initLogForm()">주유</div>
-                <div class="tab" :class="{ 'active': activeTab === 'maint' }" @click="activeTab = 'maint'; initLogForm()">정비</div>
-                <div class="tab" :class="{ 'active': activeTab === 'other' }" @click="activeTab = 'other'; initLogForm()">기타</div>
-            </div>
-
-            <div x-show="activeTab === 'info'" class="card">
-                <h3 class="font-bold mb-4">차량 기본 정보</h3>
-                <div class="flex flex-col gap-2">
-                    <label>차량번호 <input type="text" x-model="currentVehicle.info.number" class="input"></label>
-                    <label>제조사 <input type="text" x-model="currentVehicle.info.maker" class="input"></label>
-                    <label>차종 <input type="text" x-model="currentVehicle.info.model" class="input"></label>
-                    <label>등급 <input type="text" x-model="currentVehicle.info.trim" class="input"></label>
-                    <label>연식 <input type="number" x-model="currentVehicle.info.year" class="input"></label>
-                    <label>연료 
-                        <select x-model="currentVehicle.info.fuel" class="input">
-                            <option value="gasoline">휘발유</option>
-                            <option value="diesel">경유</option>
-                            <option value="lpg">LPG</option>
-                            <option value="electric">전기</option>
-                            <option value="hybrid">하이브리드</option>
-                        </select>
-                    </label>
-                    <label>배기량(cc) <input type="number" x-model="currentVehicle.info.cc" class="input"></label>
-                </div>
-            </div>
-
-            <div x-show="activeTab !== 'info'" class="card mb-4 p-4 bg-gray-50">
-                <div class="flex flex-col gap-2">
-                    <div class="flex gap-2">
-                        <input type="text" x-model="searchTerm" placeholder="검색 (장소, 항목, 메모)" class="input">
-                    </div>
-                    <div class="flex gap-2 text-sm">
-                        <input type="date" x-model="filterDateStart" class="input">
-                        <span>~</span>
-                        <input type="date" x-model="filterDateEnd" class="input">
-                    </div>
-                    <div x-show="activeTab === 'maint'" class="flex gap-2 items-center text-sm mt-2">
-                        <span>구분: </span>
-                        <label><input type="radio" value="all" x-model="filterType"> 전체</label>
-                        <label><input type="radio" value="repair" x-model="filterType"> 정비</label>
-                        <label><input type="radio" value="check" x-model="filterType"> 점검</label>
-                    </div>
-                </div>
-            </div>
-
-            <div x-show="activeTab === 'maint'" class="mb-4">
-                <h4 class="font-bold mb-2 text-sm text-gray">정비 타이머 (임박순)</h4>
-                <div class="maintenance-scroll">
-                    <template x-for="card in maintenanceCards">
-                        <div class="maint-card">
-                            <div class="flex justify-between items-center mb-1">
-                                <span class="font-bold" x-text="card.name"></span>
-                                <span class="text-xs text-red" x-show="card.percent >= 90">임박!</span>
-                            </div>
-                            <div class="text-xs text-gray" x-text="'다음: ' + card.nextKm + 'km'"></div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" :style="'width: ' + card.percent + '%'"></div>
-                            </div>
-                        </div>
-                    </template>
-                </div>
-            </div>
-
-            <div x-show="activeTab !== 'info'" class="card mb-4">
-                <h4 class="font-bold mb-2">새 기록 추가</h4>
-                <div class="grid grid-cols-2 gap-2">
-                    <input type="date" x-model="logForm.date" class="input">
-                    <input type="number" x-model="logForm.odo" placeholder="누적주행거리(km)" class="input">
-                    <input type="text" x-model="logForm.place" list="places" placeholder="장소명" class="input">
-                    <datalist id="places">
-                        <template x-for="p in getAllPlaces()">
-                            <option :value="p"></option>
-                        </template>
-                    </datalist>
-                    
-                    <template x-if="activeTab === 'fuel'">
-                        <div class="col-span-2 grid grid-cols-2 gap-2">
-                            <input type="number" x-model="logForm.cost" placeholder="총 금액" class="input">
-                            <input type="number" x-model="logForm.pricePerUnit" placeholder="단가" class="input">
-                            <input type="number" x-model="logForm.volume" placeholder="주유량(L)" class="input">
-                            <select x-model="logForm.fuelType" class="input">
-                                <option value="full">가득(상한)</option>
-                                <option value="part">부분주유</option>
-                            </select>
-                        </div>
-                    </template>
-
-                    <template x-if="activeTab === 'maint'">
-                        <div class="col-span-2 grid grid-cols-2 gap-2">
-                            <select x-model="logForm.maintType" class="input">
-                                <option value="repair">정비</option>
-                                <option value="check">점검</option>
-                            </select>
-                            <input type="text" x-model="logForm.item" placeholder="정비항목" class="input">
-                            <input type="number" x-model="logForm.cost" placeholder="금액" class="input">
-                        </div>
-                    </template>
-
-                    <template x-if="activeTab === 'other'">
-                        <div class="col-span-2 grid grid-cols-2 gap-2">
-                            <input type="text" x-model="logForm.item" placeholder="지출항목" class="input">
-                            <input type="number" x-model="logForm.cost" placeholder="금액" class="input">
-                        </div>
-                    </template>
-                    
-                    <input type="text" x-model="logForm.memo" placeholder="메모" class="input col-span-2">
-                </div>
-                <button @click="addLog(activeTab)" class="btn btn-primary w-full mt-2">저장</button>
-            </div>
-
-            <div x-show="activeTab !== 'info'" class="log-grid">
-                <template x-for="log in paginatedLogs" :key="log.id">
-                    <div class="log-item">
-                        <div class="flex justify-between mb-1">
-                            <span class="font-bold text-sm" x-text="log.date"></span>
-                            <button @click="removeLog(activeTab, log.id)" class="text-red text-xs">삭제</button>
-                        </div>
-                        
-                        <div class="text-sm">
-                            <div x-show="activeTab === 'fuel'">
-                                <div><i class="ph ph-gas-pump"></i> <span x-text="log.volume + 'L / ' + parseInt(log.cost).toLocaleString() + '원'"></span></div>
-                                <div class="text-gray text-xs" x-show="log.efficiency">연비: <span x-text="log.efficiency"></span> km/L</div>
-                            </div>
-                            <div x-show="activeTab === 'maint'">
-                                <div class="font-bold" x-text="log.item"></div>
-                                <div><span x-text="(log.maintType === 'repair' ? '정비' : '점검')"></span> / <span x-text="parseInt(log.cost).toLocaleString() + '원'"></span></div>
-                            </div>
-                            <div x-show="activeTab === 'other'">
-                                <div class="font-bold" x-text="log.item"></div>
-                                <div x-text="parseInt(log.cost).toLocaleString() + '원'"></div>
-                            </div>
-                            
-                            <div class="text-xs text-gray mt-1">
-                                <span x-text="log.odo + 'km'"></span>
-                                <span x-show="log.place"> | <span x-text="log.place"></span></span>
-                            </div>
-                            <div x-show="log.memo" class="mt-2 p-1 bg-gray-50 text-xs rounded" x-text="log.memo"></div>
-                        </div>
-                    </div>
-                </template>
-            </div>
-            
-            <div x-show="activeTab !== 'info' && currentLogs.length > itemsPerPage" class="flex justify-center gap-2 mt-4">
-                <button @click="page--" :disabled="page === 1" class="btn text-sm">이전</button>
-                <span class="p-2" x-text="page"></span>
-                <button @click="page++" :disabled="paginatedLogs.length < itemsPerPage" class="btn text-sm">다음</button>
-            </div>
-
-        </div>
-
-        <div id="toast" class="toast" x-text="toastMsg"></div>
-        
-        <div x-show="showUnsaved" class="unsaved-banner" style="display: none;" x-show.important="showUnsaved">
-            <i class="ph ph-warning"></i> 현재 변경사항이 WebDAV 서버에 저장되지 않았습니다.
-            <button @click="db.save()" class="btn text-xs bg-white border-orange-300">지금 저장</button>
-        </div>
-
-    </div>
-
-    <script type="module">
         Alpine.start();
     </script>
 </body>
