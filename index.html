@@ -1,876 +1,561 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>심플 차계부 (Car Logbook)</title>
-    <link rel="stylesheet" href="https://unpkg.com/basecoat-ui/dist/basecoat.min.css">
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-	<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <title>Cha-Gye-Bu | 차량 관리 시스템</title>
     
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            900: '#09090b', // Zinc 950
+                            800: '#18181b', // Zinc 900
+                            700: '#27272a', // Zinc 800
+                            600: '#3f3f46', // Zinc 700
+                            border: '#27272a'
+                        },
+                        brand: {
+                            DEFAULT: '#6366f1', // Indigo 500
+                            hover: '#4f46e5',   // Indigo 600
+                            bg: 'rgba(99, 102, 241, 0.1)'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'Roboto', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --primary: #2563eb;
-            --primary-dark: #1d4ed8;
-            --bg-body: #f8fafc;
-            --bg-card: #ffffff;
-            --border: #e2e8f0;
-            --text-main: #1e293b;
-            --text-sub: #64748b;
-        }
-
-        body {
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            font-family: 'Pretendard JP', sans-serif;
-        }
-		
-		* {
-			box-sizing: border-box;
-			border-color: var(--border);
-		}
-
-        /* Utility Helpers */
-        .container { max-width: 800px; margin: 0 auto; padding: 1rem; position: relative; min-height: 100vh;}
-
-        /* Component Styles */
-        .card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-
-        .btn {
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            cursor: pointer;
-            border: 1px solid var(--border);
-            background: white;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            transition: all 0.2s;
-        }
-        .btn:hover { background-color: #f1f5f9; }
-        .btn:active { transform: translateY(1px); }
+        /* Custom Scrollbar for Dark Mode */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #09090b; }
+        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #52525b; }
         
-        .btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
-        .btn-primary:hover { background: var(--primary-dark); }
-        .btn-danger { background: #fee2e2; color: #dc2626; border-color: #fecaca; }
-        
-        .btn-fab {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            width: 3.5rem;
-            height: 3.5rem;
-            border-radius: 50%;
-            background: var(--primary);
-            color: white;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-            border: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            z-index: 40;
-        }
-
-        .input {
-            width: 100%;
-            padding: 0.6rem 0.8rem;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            margin-top: 0.25rem;
-            font-size: 0.95rem;
-            transition: border-color 0.2s;
-        }
-        .input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
-        
-        .label {
-            display: block;
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: var(--text-main);
-            margin-bottom: 0.25rem;
-        }
-
-        /* Tabs */
-        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; gap: 1rem; overflow-x: auto;}
-        .tab { padding: 0.75rem 0.5rem; cursor: pointer; border-bottom: 3px solid transparent; color: var(--text-sub); white-space: nowrap; }
-        .tab.active { border-bottom-color: var(--primary); color: var(--primary); font-weight: bold; }
-
-        /* Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 50;
-            backdrop-filter: blur(2px);
-        }
-        .modal-content {
-            background: white;
-            border-radius: 16px;
-            width: 90%;
-            max-width: 500px;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            animation: modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        @keyframes modalPop {
-            0% { transform: scale(0.95); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        /* Data Grid */
-        .log-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1rem;
-        }
-        .log-item {
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 1.25rem;
-            transition: transform 0.2s;
-        }
-        .log-item:hover { transform: translateY(-2px); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-
-        /* Maintenance Scroll */
-        .maintenance-scroll {
-            display: flex;
-            overflow-x: auto;
-            gap: 1rem;
-            padding: 0.5rem 0 1.5rem 0;
-        }
-        .maint-card {
-            min-width: 220px;
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.25rem;
-            flex-shrink: 0;
-        }
-        .progress-bar { height: 8px; background: #e2e8f0; border-radius: 4px; margin-top: 0.75rem; overflow: hidden; }
-        .progress-fill { height: 100%; background: var(--primary); transition: width 0.5s ease-out; }
-
-        /* Toast & Banner */
-        .toast {
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #1e293b;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 50px;
-            font-size: 0.9rem;
-            z-index: 1000;
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        .toast.show { opacity: 1; }
-        
-        .unsaved-banner {
-            position: fixed;
-            bottom: 0; left: 0; right: 0;
-            background: #fff7ed;
-            border-top: 1px solid #fdba74;
-            color: #9a3412;
-            padding: 10px;
-            text-align: center;
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            align-items: center;
-            z-index: 90;
+        /* Glassmorphism utilities */
+        .glass {
+            background: rgba(24, 24, 27, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
         }
     </style>
+
+    <!-- Alpine.js -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    
+    <!-- Icons (Lucide) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body>
-    <div x-data="app" class="container">
+<body class="bg-dark-900 text-gray-200 font-sans antialiased min-h-screen selection:bg-brand selection:text-white overflow-x-hidden"
+      x-data="app()">
+
+    <!-- Background Gradients -->
+    <div class="fixed inset-0 z-0 pointer-events-none">
+        <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-brand/20 blur-[120px]"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-purple-900/20 blur-[120px]"></div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="relative z-10 max-w-5xl mx-auto px-4 py-8 h-screen flex flex-col">
         
-        <!-- Header -->
-        <header class="flex justify-between items-center mb-6">
-            <h1 class="font-bold text-xl flex items-center gap-2 text-blue-600">
-                <i class="ph ph-car-profile text-2xl" style="color: var(--primary)"></i> 
-                <span>차계부</span>
-            </h1>
-            <div x-show="route !== 'home'">
-                <button @click="goBack()" class="btn text-sm"><i class="ph ph-arrow-left"></i> 목록으로</button>
+        <!-- Header (Visible only after onboarding) -->
+        <header x-show="router.current !== 'onboarding'" x-transition 
+                class="flex justify-between items-center mb-8 pb-4 border-b border-dark-border">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-brand flex items-center justify-center text-white font-bold">
+                    <i data-lucide="car-front"></i>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight text-white">Cha-Gye-Bu</h1>
+            </div>
+            
+            <div class="flex gap-2">
+                <!-- DB Settings Dropdown -->
+                <div x-data="{ open: false }" class="relative">
+                    <button @click="open = !open" class="p-2 rounded-md hover:bg-dark-700 text-gray-400 hover:text-white transition-colors">
+                        <i data-lucide="settings" class="w-5 h-5"></i>
+                    </button>
+                    
+                    <div x-show="open" @click.outside="open = false" 
+                         x-transition:enter="transition ease-out duration-100"
+                         x-transition:enter-start="opacity-0 scale-95"
+                         x-transition:enter-end="opacity-100 scale-100"
+                         class="absolute right-0 mt-2 w-48 bg-dark-800 border border-dark-600 rounded-lg shadow-xl py-1 z-50">
+                        <button @click="exportDB(); open = false" class="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-300 hover:bg-dark-700 text-left">
+                            <i data-lucide="download" class="w-4 h-4"></i> 내보내기 (JSON)
+                        </button>
+                        <button @click="triggerImport(); open = false" class="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-300 hover:bg-dark-700 text-left">
+                            <i data-lucide="upload" class="w-4 h-4"></i> 가져오기
+                        </button>
+                        <div class="h-px bg-dark-600 my-1"></div>
+                        <button @click="closeDatabase(); open = false" class="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-400 hover:bg-dark-700 text-left">
+                            <i data-lucide="log-out" class="w-4 h-4"></i> 데이터베이스 닫기
+                        </button>
+                    </div>
+                </div>
             </div>
         </header>
 
-        <!-- View: Home -->
-        <div x-show="route === 'home'" class="flex flex-col gap-4 max-w-md mx-auto mt-10">
-            <div class="card p-8 text-center">
-                <div class="mb-6 flex justify-center">
-                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-600">
-                        <i class="ph ph-garage text-3xl"></i>
-                    </div>
+        <!-- View: Onboarding -->
+        <main x-show="router.current === 'onboarding'" 
+              x-transition:enter="transition ease-out duration-300 delay-100"
+              x-transition:enter-start="opacity-0 translate-y-4"
+              x-transition:enter-end="opacity-100 translate-y-0"
+              class="flex-1 flex flex-col justify-center items-center text-center">
+            
+            <div class="mb-8 relative">
+                <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-brand to-purple-600 flex items-center justify-center shadow-lg shadow-brand/20">
+                    <i data-lucide="database" class="w-10 h-10 text-white"></i>
                 </div>
-                <h2 class="font-bold text-2xl mb-2">환영합니다!</h2>
-                <p class="mb-8 text-gray">차량 관리를 시작할 데이터베이스를 선택하세요.</p>
-                <div class="flex flex-col gap-3">
-                    <button @click="openDB('local')" class="btn btn-primary py-3">
-                        <i class="ph ph-device-mobile"></i> 내 기기에서 시작 (LocalStorage)
-                    </button>
-                    <button @click="createDB()" class="btn text-red py-3">
-                        <i class="ph ph-trash"></i> 데이터 초기화 / 새로 만들기
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- View: List -->
-        <div x-show="route === 'list'" class="flex flex-col gap-6">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h2 class="font-bold text-xl">내 차량 목록</h2>
-                    <p class="text-sm text-gray">관리할 차량을 선택하세요</p>
-                </div>
-                <button @click="addVehicle()" class="btn btn-primary"><i class="ph ph-plus"></i> 차량 추가</button>
-            </div>
-
-            <div class="grid gap-4">
-                <template x-for="(car, index) in db.data.vehicles" :key="car.id">
-                    <div class="card flex justify-between items-center hover:shadow-md transition-shadow cursor-pointer" @click="selectVehicle(car)">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-500">
-                                <i class="ph ph-car text-xl"></i>
-                            </div>
-                            <div>
-                                <h3 class="font-bold text-lg" x-text="car.info.number"></h3>
-                                <p class="text-sm text-gray" x-text="[car.info.maker, car.info.model].filter(Boolean).join(' ') || '정보 없음'"></p>
-                            </div>
-                        </div>
-                        <button @click.stop="deleteVehicle(index)" class="btn btn-danger p-2 rounded-full"><i class="ph ph-trash"></i></button>
-                    </div>
-                </template>
             </div>
             
-            <div x-show="db.data.vehicles.length === 0" class="text-center py-10 text-gray bg-gray-50 rounded-lg border border-dashed border-gray-300">
-                <i class="ph ph-car text-3xl mb-2 block"></i>
-                등록된 차량이 없습니다.
-            </div>
+            <h1 class="text-4xl md:text-5xl font-bold text-white mb-4 tracking-tight">
+                차계부 관리의 시작
+            </h1>
+            <p class="text-gray-400 max-w-md mb-12 text-lg">
+                안전하게 내 차의 모든 기록을 관리하세요.<br>
+                데이터는 브라우저에 저장되거나 클라우드와 연동됩니다.
+            </p>
 
-            <div class="card p-4 mt-4 bg-gray-50 border-none">
-                <h4 class="font-bold text-sm mb-2 text-gray-700">데이터 백업/복원</h4>
-                <div class="flex gap-2">
-                    <button @click="exportDB()" class="btn text-sm bg-white"><i class="ph ph-download-simple"></i> 내보내기</button>
-                    <label class="btn text-sm bg-white cursor-pointer">
-                        <i class="ph ph-upload-simple"></i> 가져오기
-                        <input type="file" class="hidden" @change="importDB">
-                    </label>
-                </div>
-            </div>
-        </div>
-
-        <!-- View: Detail -->
-        <div x-show="route === 'detail'" class="w-full pb-20">
-            <!-- Tabs -->
-            <div class="tabs sticky top-0 bg-body z-10 pt-2">
-                <div class="tab" :class="{ 'active': activeTab === 'info' }" @click="activeTab = 'info'">차량정보</div>
-                <div class="tab" :class="{ 'active': activeTab === 'fuel' }" @click="activeTab = 'fuel'">주유기록</div>
-                <div class="tab" :class="{ 'active': activeTab === 'maint' }" @click="activeTab = 'maint'">정비내역</div>
-                <div class="tab" :class="{ 'active': activeTab === 'other' }" @click="activeTab = 'other'">기타지출</div>
-            </div>
-
-            <!-- Tab: Info -->
-            <div x-show="activeTab === 'info'" class="card">
-                <h3 class="font-bold mb-6 text-lg">기본 정보 수정</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div><label class="label">차량번호</label><input type="text" x-model="currentVehicle.info.number" class="input"></div>
-                    <div><label class="label">제조사</label><input type="text" x-model="currentVehicle.info.maker" class="input"></div>
-                    <div><label class="label">차종</label><input type="text" x-model="currentVehicle.info.model" class="input"></div>
-                    <div><label class="label">등급</label><input type="text" x-model="currentVehicle.info.trim" class="input"></div>
-                    <div><label class="label">연식</label><input type="number" x-model="currentVehicle.info.year" class="input"></div>
-                    <div>
-                        <label class="label">연료</label>
-                        <select x-model="currentVehicle.info.fuel" class="input">
-                            <option value="gasoline">휘발유</option>
-                            <option value="diesel">경유</option>
-                            <option value="lpg">LPG</option>
-                            <option value="electric">전기</option>
-                            <option value="hybrid">하이브리드</option>
-                        </select>
+            <div class="grid md:grid-cols-2 gap-4 w-full max-w-2xl">
+                <!-- Create New -->
+                <button @click="createLocalDatabase()" 
+                        class="group p-6 rounded-xl border border-dark-600 bg-dark-800 hover:bg-dark-700 hover:border-brand transition-all duration-300 text-left relative overflow-hidden">
+                    <div class="absolute inset-0 bg-brand/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div class="w-10 h-10 rounded-full bg-dark-700 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform text-white">
+                        <i data-lucide="plus" class="w-5 h-5"></i>
                     </div>
-                    <div><label class="label">배기량(cc)</label><input type="number" x-model="currentVehicle.info.cc" class="input"></div>
-                </div>
-            </div>
+                    <h3 class="text-lg font-semibold text-white mb-1">새 데이터베이스 만들기</h3>
+                    <p class="text-sm text-gray-400">로컬 저장소에 새로운 차계부를 생성합니다. 빠르고 간편합니다.</p>
+                </button>
 
-            <!-- Filters -->
-            <div x-show="activeTab !== 'info'" class="mb-6">
-                <div class="card p-4 bg-white">
-                    <div class="flex flex-col gap-3">
-                        <div class="relative">
-                            <i class="ph ph-magnifying-glass absolute left-3 top-3 text-gray-400"></i>
-                            <input type="text" x-model="searchTerm" placeholder="검색 (장소, 항목, 메모)" class="input pl-10" style="padding-left: 2.5rem;">
-                        </div>
-                        <div class="flex gap-2">
-                            <input type="date" x-model="filterDateStart" class="input text-sm">
-                            <input type="date" x-model="filterDateEnd" class="input text-sm">
-                        </div>
-                        <div x-show="activeTab === 'maint'" class="flex gap-3 items-center text-sm pt-2 border-t mt-1">
-                            <span class="font-bold text-gray-600">보기:</span>
-                            <label class="flex items-center gap-1 cursor-pointer"><input type="radio" value="all" x-model="filterType"> 전체</label>
-                            <label class="flex items-center gap-1 cursor-pointer"><input type="radio" value="repair" x-model="filterType"> 정비</label>
-                            <label class="flex items-center gap-1 cursor-pointer"><input type="radio" value="check" x-model="filterType"> 점검</label>
-                        </div>
+                <!-- Open Existing (Simulated WebDAV/File) -->
+                <button @click="openModal('webdav-config')"
+                        class="group p-6 rounded-xl border border-dark-600 bg-dark-800 hover:bg-dark-700 hover:border-gray-500 transition-all duration-300 text-left">
+                    <div class="w-10 h-10 rounded-full bg-dark-700 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform text-white">
+                        <i data-lucide="globe" class="w-5 h-5"></i>
                     </div>
+                    <h3 class="text-lg font-semibold text-white mb-1">WebDAV 연결하기</h3>
+                    <p class="text-sm text-gray-400">개인 NAS나 클라우드 저장소에 있는 차계부 파일을 불러옵니다.</p>
+                </button>
+            </div>
+            
+            <div class="mt-8 text-sm text-gray-500">
+                <button @click="triggerImport()" class="hover:text-gray-300 underline underline-offset-4">
+                    이미 백업 파일(.json)이 있으신가요?
+                </button>
+            </div>
+        </main>
+
+        <!-- View: Car Selection -->
+        <main x-show="router.current === 'car-list'" 
+              x-transition:enter="transition ease-out duration-300"
+              x-transition:enter-start="opacity-0 scale-95"
+              x-transition:enter-end="opacity-100 scale-100"
+              class="flex-1">
+            
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-white">나의 차량</h2>
+                    <p class="text-gray-400 text-sm mt-1">관리할 차량을 선택하거나 추가하세요.</p>
                 </div>
+                <button @click="openModal('add-car')" 
+                        class="bg-white text-black hover:bg-gray-200 px-4 py-2 rounded-md font-medium text-sm flex items-center gap-2 transition-colors">
+                    <i data-lucide="plus" class="w-4 h-4"></i> 차량 추가
+                </button>
             </div>
 
-            <!-- Maintenance Timer -->
-            <div x-show="activeTab === 'maint'" class="mb-6">
-                <div class="flex justify-between items-end mb-2 px-1">
-                    <h4 class="font-bold text-gray-700">정비 알림</h4>
-                    <span class="text-xs text-gray">교체주기 임박순</span>
-                </div>
-                <div class="maintenance-scroll">
-                    <template x-for="card in maintenanceCards">
-                        <div class="maint-card shadow-sm">
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="font-bold text-lg" x-text="card.name"></span>
-                                <span class="text-xs font-bold px-2 py-1 rounded bg-red-100 text-red-600" x-show="card.percent >= 90">임박</span>
-                            </div>
-                            <div class="text-sm text-gray-600 mb-1" x-text="'다음 교체: ' + card.nextKm.toLocaleString() + 'km'"></div>
-                            <div class="text-xs text-gray-400" x-text="'(남은 거리: ' + card.remainingKm.toLocaleString() + 'km)'"></div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" :style="'width: ' + card.percent + '%'" :class="{'bg-red-500': card.percent >= 90}"></div>
-                            </div>
-                        </div>
-                    </template>
-                </div>
-            </div>
-
-            <!-- Log List -->
-            <div x-show="activeTab !== 'info'" class="log-grid pb-20">
-                <template x-for="log in paginatedLogs" :key="log.id">
-                    <div class="log-item relative group">
-                        <div class="flex justify-between items-start mb-3">
-                            <div>
-                                <div class="font-bold text-lg text-gray-800" x-text="log.date"></div>
-                                <div class="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
-                                    <i class="ph ph-gauge"></i> <span x-text="Number(log.odo).toLocaleString() + ' km'"></span>
-                                </div>
-                            </div>
-                            <button @click="removeLog(activeTab, log.id)" class="text-gray-300 hover:text-red-500 p-1"><i class="ph ph-trash text-lg"></i></button>
-                        </div>
+            <!-- Car Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <template x-for="car in db.cars" :key="car.id">
+                    <div @click="selectCar(car.id)" 
+                         class="group relative bg-dark-800 border border-dark-600 rounded-xl p-5 cursor-pointer hover:border-brand/50 hover:bg-dark-800/80 transition-all duration-200 overflow-hidden">
                         
-                        <!-- Log Content -->
-                        <div class="bg-gray-50 rounded p-3 mb-2">
-                            <!-- Fuel -->
-                            <div x-show="activeTab === 'fuel'">
-                                <div class="flex justify-between items-center mb-1">
-                                    <span class="font-bold text-blue-600" x-text="Number(log.cost).toLocaleString() + '원'"></span>
-                                    <span class="text-sm bg-white border px-2 rounded" x-text="log.fuelType === 'full' ? '가득' : '부분'"></span>
+                        <!-- Decorative gradient on hover -->
+                        <div class="absolute inset-0 bg-gradient-to-r from-brand/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        
+                        <div class="relative z-10 flex flex-col h-full justify-between">
+                            <div>
+                                <div class="flex justify-between items-start mb-2">
+                                    <span class="inline-block px-2 py-0.5 rounded text-xs font-medium bg-dark-700 text-gray-300 border border-dark-600" x-text="car.fuelType"></span>
+                                    <i data-lucide="chevron-right" class="w-4 h-4 text-gray-500 group-hover:text-white transition-colors"></i>
                                 </div>
-                                <div class="text-sm text-gray-600 flex justify-between">
-                                    <span x-text="log.volume + 'L'"></span>
-                                    <span x-text="'@ ' + Number(log.pricePerUnit).toLocaleString() + '원'"></span>
-                                </div>
-                                <div class="mt-2 text-xs text-green-700 font-bold flex items-center gap-1" x-show="log.efficiency">
-                                    <i class="ph ph-trend-up"></i> 연비: <span x-text="log.efficiency"></span> km/L
-                                </div>
+                                <h3 class="text-xl font-bold text-white tracking-tight" x-text="car.number"></h3>
+                                <p class="text-gray-400 text-sm" x-text="car.model"></p>
                             </div>
-                            <!-- Maint -->
-                            <div x-show="activeTab === 'maint'">
-                                <div class="flex justify-between items-center mb-1">
-                                    <span class="font-bold text-gray-800" x-text="log.item"></span>
-                                    <span class="font-bold text-blue-600" x-text="Number(log.cost).toLocaleString() + '원'"></span>
-                                </div>
-                                <div class="text-xs text-gray-500 badge inline-block px-2 py-0.5 rounded bg-gray-200" x-text="log.maintType === 'repair' ? '정비' : '점검'"></div>
+                            
+                            <div class="mt-6 pt-4 border-t border-dark-700 flex justify-between text-xs text-gray-500">
+                                <span x-text="car.year + '년식'"></span>
+                                <span x-text="formatDistance(car.totalDistance)"></span>
                             </div>
-                            <!-- Other -->
-                            <div x-show="activeTab === 'other'">
-                                <div class="flex justify-between items-center mb-1">
-                                    <span class="font-bold text-gray-800" x-text="log.item"></span>
-                                    <span class="font-bold text-blue-600" x-text="Number(log.cost).toLocaleString() + '원'"></span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="flex justify-between items-center text-sm text-gray-500">
-                            <div class="flex items-center gap-1 text-xs">
-                                <i class="ph ph-map-pin" x-show="log.place"></i>
-                                <span x-text="log.place"></span>
-                            </div>
-                        </div>
-                         <div x-show="log.memo" class="mt-2 text-xs text-gray-500 border-t pt-2 border-dashed">
-                            <i class="ph ph-note-pencil mr-1"></i> <span x-text="log.memo"></span>
                         </div>
                     </div>
                 </template>
-            </div>
 
-            <!-- Floating Action Button for Add -->
-            <button x-show="activeTab !== 'info'" @click="openAddForm()" class="btn-fab transition-transform hover:scale-110 active:scale-95">
-                <i class="ph ph-plus"></i>
-            </button>
-
-            <!-- Pagination -->
-            <div x-show="activeTab !== 'info' && currentLogs.length > itemsPerPage" class="flex justify-center gap-2 mt-6 pb-20">
-                <button @click="page--" :disabled="page === 1" class="btn text-sm">이전</button>
-                <span class="p-2 font-bold text-gray-600" x-text="page"></span>
-                <button @click="page++" :disabled="paginatedLogs.length < itemsPerPage" class="btn text-sm">다음</button>
-            </div>
-        </div>
-
-        <!-- MODAL: Add Log Form -->
-        <div x-show="showAddForm" class="modal-overlay hidden" :class="{ 'hidden': !showAddForm }">
-            <div class="modal-content" @click.away="closeAddForm()">
-                <div class="p-4 border-b flex justify-between items-center bg-gray-50">
-                    <h3 class="font-bold text-lg" x-text="getTabName() + ' 기록 추가'"></h3>
-                    <button @click="closeAddForm()" class="text-gray-400 hover:text-gray-600"><i class="ph ph-x text-xl"></i></button>
-                </div>
-                
-                <div class="p-6 flex flex-col gap-5">
-                    <!-- Common: Date & Odo -->
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="label">날짜</label>
-                            <input type="date" x-model="logForm.date" class="input">
-                        </div>
-                        <div>
-                            <label class="label">누적주행거리 (km)</label>
-                            <input type="number" x-model="logForm.odo" class="input" placeholder="ex) 15000">
-                        </div>
+                <!-- Empty State -->
+                <template x-if="db.cars.length === 0">
+                    <div class="col-span-full py-12 flex flex-col items-center justify-center text-gray-500 border border-dashed border-dark-600 rounded-xl bg-dark-800/30">
+                        <i data-lucide="car" class="w-12 h-12 mb-4 opacity-50"></i>
+                        <p class="text-lg font-medium">등록된 차량이 없습니다.</p>
+                        <p class="text-sm mt-1">우측 상단의 버튼을 눌러 첫 차량을 등록해보세요.</p>
                     </div>
-
-                    <!-- Tab Specific: Fuel -->
-                    <template x-if="activeTab === 'fuel'">
-                        <div class="flex flex-col gap-4 py-4">
-                            <div class="flex gap-4 mb-1">
-                                <label class="flex items-center gap-2 cursor-pointer font-bold text-sm">
-                                    <input type="radio" value="full" x-model="logForm.fuelType" class="accent-blue-600"> 가득(상한)
-                                </label>
-                                <label class="flex items-center gap-2 cursor-pointer font-bold text-sm">
-                                    <input type="radio" value="part" x-model="logForm.fuelType" class="accent-blue-600"> 부분주유
-                                </label>
-                            </div>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div class="col-span-2">
-                                    <label class="label text-xs text-gray-600">총 결제금액</label>
-                                    <input type="number" x-model="logForm.cost" placeholder="원" class="input font-bold text-right text-lg">
-                                </div>
-                                <div>
-                                    <label class="label text-xs text-gray-600">리터당 단가</label>
-                                    <input type="number" x-model="logForm.pricePerUnit" placeholder="원/L" class="input text-right">
-                                </div>
-                                <div>
-                                    <label class="label text-xs text-gray-600">주유량 (L)</label>
-                                    <input type="number" x-model="logForm.volume" placeholder="L" class="input text-right">
-                                </div>
-                            </div>
-                        </div>
-                    </template>
-
-                    <!-- Tab Specific: Maint -->
-                    <template x-if="activeTab === 'maint'">
-                        <div class="flex flex-col gap-4">
-                            <div class="flex gap-2">
-                                <select x-model="logForm.maintType" class="input w-1/3 font-bold">
-                                    <option value="repair">정비</option>
-                                    <option value="check">점검</option>
-                                </select>
-                                <input type="text" x-model="logForm.item" placeholder="정비 항목 (예: 엔진오일)" class="input w-2/3">
-                            </div>
-                            <div>
-                                <label class="label">비용</label>
-                                <input type="number" x-model="logForm.cost" placeholder="원" class="input text-right font-bold">
-                            </div>
-                        </div>
-                    </template>
-
-                    <!-- Tab Specific: Other -->
-                    <template x-if="activeTab === 'other'">
-                        <div class="flex flex-col gap-4">
-                            <div>
-                                <label class="label">지출 항목</label>
-                                <input type="text" x-model="logForm.item" placeholder="예: 세차비, 주차비" class="input">
-                            </div>
-                            <div>
-                                <label class="label">비용</label>
-                                <input type="number" x-model="logForm.cost" placeholder="원" class="input text-right font-bold">
-                            </div>
-                        </div>
-                    </template>
-
-                    <!-- Common: Place & Memo -->
-                    <div class="flex flex-col gap-4 border-t pt-4">
-                        <div>
-                            <label class="label">장소</label>
-                            <input type="text" x-model="logForm.place" list="placeOptions" class="input" placeholder="장소명 입력 또는 선택">
-                            <!-- Datalist inside modal to ensure visibility -->
-                            <datalist id="placeOptions">
-                                <template x-for="p in placeSuggestions" :key="p">
-                                    <option :value="p"></option>
-                                </template>
-                            </datalist>
-                        </div>
-                        <div>
-                            <label class="label">메모</label>
-                            <input type="text" x-model="logForm.memo" class="input" placeholder="특이사항 메모">
-                        </div>
-                    </div>
-
-                    <button @click="saveLog()" class="btn btn-primary w-full py-3 text-lg mt-2 shadow-lg shadow-blue-200">
-                        저장하기
-                    </button>
-                </div>
+                </template>
             </div>
-        </div>
-
-        <!-- Toast -->
-        <div id="toast" class="toast" x-text="toastMsg"></div>
-        
-        <!-- Unsaved Banner -->
-        <div x-show="showUnsaved" class="unsaved-banner hidden" :class="{ 'hidden': !showUnsaved }">
-            <i class="ph ph-warning"></i> 저장되지 않은 변경사항이 있습니다.
-            <button @click="db.save()" class="btn text-xs bg-white border-orange-300">지금 저장</button>
-        </div>
-
+        </main>
     </div>
 
-    <script type="module">
-        import Alpine from 'https://esm.sh/alpinejs';
-        
-        // --- Backend Abstraction ---
-        class DataManager {
-            constructor() {
-                this.type = 'local';
-                this.data = { vehicles: [] };
-                this.isDirty = false;
-            }
+    <!-- Hidden Input for File Import -->
+    <input type="file" id="fileInput" accept=".json" class="hidden" @change="handleFileImport($event)">
 
-            init() {
-                const saved = localStorage.getItem('carlog_db');
-                if (saved) {
+    <!-- Modals -->
+    <div x-show="modal.active" class="fixed inset-0 z-50 flex items-center justify-center p-4" style="display: none;">
+        <!-- Backdrop -->
+        <div x-show="modal.active" 
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             @click="closeModal()"
+             class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+
+        <!-- Content -->
+        <div x-show="modal.active"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+             x-transition:leave-end="opacity-0 scale-95 translate-y-4"
+             class="relative w-full max-w-md bg-dark-800 border border-dark-600 rounded-xl shadow-2xl overflow-hidden">
+            
+            <!-- Modal: Add Car -->
+            <div x-show="modal.type === 'add-car'" class="p-6">
+                <div class="flex justify-between items-center mb-5">
+                    <h3 class="text-lg font-bold text-white">차량 추가</h3>
+                    <button @click="closeModal()" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+                
+                <form @submit.prevent="submitAddCar" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">차량 번호</label>
+                        <input type="text" x-model="forms.car.number" required placeholder="예: 12가 3456" 
+                               class="w-full bg-dark-900 border border-dark-600 rounded-md px-3 py-2 text-white focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand placeholder-gray-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">제조사 및 차종</label>
+                        <input type="text" x-model="forms.car.model" required placeholder="예: 현대 쏘나타" 
+                               class="w-full bg-dark-900 border border-dark-600 rounded-md px-3 py-2 text-white focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand placeholder-gray-600">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-400 mb-1">연식 (YYYY)</label>
+                            <input type="number" x-model="forms.car.year" required placeholder="2024" 
+                                   class="w-full bg-dark-900 border border-dark-600 rounded-md px-3 py-2 text-white focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand placeholder-gray-600">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-400 mb-1">연료</label>
+                            <select x-model="forms.car.fuelType" class="w-full bg-dark-900 border border-dark-600 rounded-md px-3 py-2 text-white focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand">
+                                <option value="휘발유">휘발유</option>
+                                <option value="경유">경유</option>
+                                <option value="LPG">LPG</option>
+                                <option value="전기">전기</option>
+                                <option value="하이브리드">하이브리드</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">현재 주행거리 (km)</label>
+                        <input type="number" x-model="forms.car.totalDistance" placeholder="0" 
+                               class="w-full bg-dark-900 border border-dark-600 rounded-md px-3 py-2 text-white focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand placeholder-gray-600">
+                    </div>
+
+                    <div class="pt-4 flex justify-end gap-2">
+                        <button type="button" @click="closeModal()" class="px-4 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-dark-700">취소</button>
+                        <button type="submit" class="px-4 py-2 rounded-md text-sm font-medium bg-white text-black hover:bg-gray-200">저장</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Modal: WebDAV Config -->
+            <div x-show="modal.type === 'webdav-config'" class="p-6">
+                 <div class="flex justify-between items-center mb-5">
+                    <h3 class="text-lg font-bold text-white">WebDAV 연결</h3>
+                    <button @click="closeModal()" class="text-gray-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+                <div class="space-y-4">
+                    <div class="p-3 bg-brand/10 border border-brand/20 rounded-md text-brand text-xs">
+                        <i data-lucide="info" class="inline w-3 h-3 mr-1"></i> 현재 버전에서는 UI 시뮬레이션만 제공됩니다.
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">서버 주소</label>
+                        <input type="text" placeholder="https://dav.example.com" class="w-full bg-dark-900 border border-dark-600 rounded-md px-3 py-2 text-white focus:outline-none focus:border-brand">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                         <div>
+                            <label class="block text-xs font-medium text-gray-400 mb-1">아이디</label>
+                            <input type="text" class="w-full bg-dark-900 border border-dark-600 rounded-md px-3 py-2 text-white focus:outline-none focus:border-brand">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-400 mb-1">비밀번호</label>
+                            <input type="password" class="w-full bg-dark-900 border border-dark-600 rounded-md px-3 py-2 text-white focus:outline-none focus:border-brand">
+                        </div>
+                    </div>
+                    <div class="pt-4 flex justify-end gap-2">
+                         <button type="button" @click="closeModal()" class="px-4 py-2 rounded-md text-sm font-medium text-gray-300 hover:bg-dark-700">취소</button>
+                         <button type="button" @click="connectWebDAVSim()" class="px-4 py-2 rounded-md text-sm font-medium bg-brand hover:bg-brand-hover text-white">연결</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] flex flex-col gap-2 pointer-events-none">
+        <template x-for="toast in toasts" :key="toast.id">
+            <div x-show="toast.visible" 
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-y-2"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-300"
+                 x-transition:leave-start="opacity-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 translate-y-2"
+                 class="px-4 py-2.5 rounded-full shadow-lg border text-sm font-medium flex items-center gap-2 pointer-events-auto"
+                 :class="{
+                    'bg-dark-800 border-brand text-white': toast.type === 'success',
+                    'bg-red-900/90 border-red-700 text-white': toast.type === 'error',
+                    'bg-dark-700 border-dark-600 text-gray-200': toast.type === 'info'
+                 }">
+                <i x-show="toast.type === 'success'" data-lucide="check-circle" class="w-4 h-4 text-brand"></i>
+                <i x-show="toast.type === 'error'" data-lucide="alert-circle" class="w-4 h-4 text-red-400"></i>
+                <span x-text="toast.message"></span>
+            </div>
+        </template>
+    </div>
+
+    <script>
+        // --- Backend Abstraction Layer ---
+        const Backend = {
+            DB_KEY: 'chagyebu_db',
+            
+            // 데이터베이스 로드
+            load() {
+                const raw = localStorage.getItem(this.DB_KEY);
+                if (raw) {
                     try {
-                        this.data = JSON.parse(saved);
-                    } catch(e) { console.error("Data parse error", e); }
+                        return JSON.parse(raw);
+                    } catch (e) {
+                        console.error('DB parse error', e);
+                        return null;
+                    }
                 }
-            }
+                return null;
+            },
 
-            reset() {
-                this.data = { vehicles: [] };
-                this.save();
-            }
+            // 데이터베이스 저장
+            save(data) {
+                // LocalStorage 저장
+                localStorage.setItem(this.DB_KEY, JSON.stringify(data));
+                
+                // WebDAV 로직이 있다면 여기서 실행 (추후 구현)
+                // if (data.config.type === 'webdav') { ... }
+                
+                return true;
+            },
 
-            importData(jsonString) {
-                try {
-                    this.data = JSON.parse(jsonString);
-                    this.save();
-                    return true;
-                } catch (e) {
-                    alert('잘못된 데이터 형식입니다.');
-                    return false;
-                }
-            }
+            // 초기화
+            initNew() {
+                const initialData = {
+                    config: { type: 'local', lastSync: null },
+                    cars: [],
+                    records: []
+                };
+                this.save(initialData);
+                return initialData;
+            },
 
-            exportData() {
-                return JSON.stringify(this.data, null, 2);
+            // 삭제 (로그아웃)
+            clear() {
+                // 실제 데이터를 삭제하지 않고 메모리에서만 언로드하는 개념이지만,
+                // LocalStorage 모드이므로 사용자가 원하면 유지하거나 삭제할 수 있음.
+                // 여기서는 현재 세션 상태만 초기화함.
+                return true; 
             }
+        };
 
-            save() {
-                if (this.type === 'local') {
-                    localStorage.setItem('carlog_db', JSON.stringify(this.data));
-                    this.isDirty = false;
-                } else {
-                    this.isDirty = true;
-                    // WebDAV logic stub
-                }
-            }
-        }
-
+        // --- Alpine App Logic ---
         document.addEventListener('alpine:init', () => {
             Alpine.data('app', () => ({
-                route: 'home',
-                db: new DataManager(),
-                currentVehicle: null,
-                activeTab: 'info',
-                showUnsaved: false,
-                toastMsg: '',
+                router: {
+                    current: 'onboarding' // onboarding | car-list | car-detail (추후)
+                },
+                db: null, // Loaded Data
                 
-                // Form State
-                showAddForm: false,
-                logForm: {},
-                
-                // Filters
-                searchTerm: '',
-                filterDateStart: '',
-                filterDateEnd: '',
-                filterType: 'all',
-                page: 1,
-                itemsPerPage: 100,
+                // UI States
+                modal: {
+                    active: false,
+                    type: null // 'add-car' | 'webdav-config'
+                },
+                forms: {
+                    car: { number: '', model: '', year: '', fuelType: '휘발유', totalDistance: '' }
+                },
+                toasts: [],
 
                 init() {
-                    this.db.init();
-                    this.$watch('db.data', () => {
-                        this.db.save();
-                        this.checkUnsaved();
+                    // Lucide Icons Render
+                    this.$watch('router.current', () => {
+                        this.$nextTick(() => lucide.createIcons());
                     });
-                },
+                    this.$watch('modal.active', (val) => {
+                        if(val) this.$nextTick(() => lucide.createIcons());
+                    });
 
-                checkUnsaved() {
-                    this.showUnsaved = (this.db.type === 'webdav' && this.db.isDirty);
-                },
-
-                openDB(type) {
-                    this.db.type = type;
-                    if (type === 'webdav') {
-                        const url = prompt("WebDAV URL:");
-                        if(url) {
-                            alert("WebDAV 데모 모드");
-                            this.route = 'list';
-                        }
-                    } else {
-                        this.route = 'list';
+                    // Check for existing DB
+                    const existingData = Backend.load();
+                    if (existingData) {
+                        this.db = existingData;
+                        this.router.current = 'car-list';
+                        this.showToast('데이터베이스를 불러왔습니다.', 'success');
                     }
-                },
-
-                createDB() {
-                    if(confirm("기존 데이터가 초기화됩니다.")) {
-                        this.db.reset();
-                        this.route = 'list';
-                    }
-                },
-
-                goBack() {
-                    if (this.route === 'detail') this.route = 'list';
-                    else if (this.route === 'list') this.route = 'home';
-                },
-
-                addVehicle() {
-                    const number = prompt("차량 번호 입력:");
-                    if (!number) return;
                     
+                    lucide.createIcons();
+                },
+
+                // --- Actions ---
+
+                createLocalDatabase() {
+                    this.db = Backend.initNew();
+                    this.router.current = 'car-list';
+                    this.showToast('새 로컬 데이터베이스가 생성되었습니다.', 'success');
+                },
+
+                openModal(type) {
+                    this.modal.type = type;
+                    this.modal.active = true;
+                    // Reset forms
+                    if (type === 'add-car') {
+                        this.forms.car = { number: '', model: '', year: new Date().getFullYear(), fuelType: '휘발유', totalDistance: '' };
+                    }
+                },
+
+                closeModal() {
+                    this.modal.active = false;
+                    setTimeout(() => { this.modal.type = null; }, 200);
+                },
+
+                submitAddCar() {
                     const newCar = {
-                        id: Date.now(),
-                        info: { number: number, maker: '', model: '', trim: '', year: '', fuel: 'gasoline', cc: '' },
-                        logs: { fuel: [], maint: [], other: [] }
+                        id: crypto.randomUUID(),
+                        ...this.forms.car,
+                        totalDistance: Number(this.forms.car.totalDistance) || 0,
+                        createdAt: new Date().toISOString()
                     };
-                    this.db.data.vehicles.push(newCar);
-                    this.db.save();
+
+                    this.db.cars.push(newCar);
+                    this.autoSave();
+                    
+                    this.closeModal();
+                    this.showToast('차량이 추가되었습니다.', 'success');
                 },
 
-                selectVehicle(car) {
-                    this.currentVehicle = car;
-                    this.activeTab = 'info';
-                    this.route = 'detail';
-                    this.resetFilters();
+                selectCar(carId) {
+                    // 추후 구현: 상세 페이지 이동
+                    this.showToast(`차량 선택됨: ${carId} (상세화면 준비중)`, 'info');
                 },
 
-                deleteVehicle(index) {
-                    if(confirm("정말 삭제하시겠습니까?")) {
-                        this.db.data.vehicles.splice(index, 1);
-                        this.db.save();
+                connectWebDAVSim() {
+                    this.closeModal();
+                    this.showToast('WebDAV 연결 시뮬레이션: 성공', 'success');
+                    // 실제로는 여기서 WebDAV 설정 저장 및 데이터 pull
+                    if (!this.db) {
+                        this.db = Backend.initNew();
+                        this.db.config.type = 'webdav';
+                    }
+                    this.router.current = 'car-list';
+                },
+
+                closeDatabase() {
+                    // 현재 메모리의 DB를 비우고 온보딩으로 이동
+                    this.db = null;
+                    this.router.current = 'onboarding';
+                    this.showToast('데이터베이스를 닫았습니다.', 'info');
+                },
+
+                // --- Data Management ---
+
+                autoSave() {
+                    if (this.db) {
+                        Backend.save(this.db);
+                        // WebDAV인 경우 미저장 상태 표시 로직 추가 가능
                     }
                 },
 
                 exportDB() {
-                    const blob = new Blob([this.db.exportData()], {type: 'application/json'});
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `carlog_${new Date().toISOString().slice(0,10)}.json`;
-                    a.click();
+                    if (!this.db) return;
+                    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.db));
+                    const downloadAnchorNode = document.createElement('a');
+                    downloadAnchorNode.setAttribute("href", dataStr);
+                    downloadAnchorNode.setAttribute("download", "chagyebu_backup_" + new Date().toISOString().slice(0,10) + ".json");
+                    document.body.appendChild(downloadAnchorNode);
+                    downloadAnchorNode.click();
+                    downloadAnchorNode.remove();
+                    this.showToast('백업 파일이 다운로드되었습니다.', 'success');
                 },
 
-                importDB(event) {
+                triggerImport() {
+                    document.getElementById('fileInput').click();
+                },
+
+                handleFileImport(event) {
                     const file = event.target.files[0];
                     if (!file) return;
+
                     const reader = new FileReader();
                     reader.onload = (e) => {
-                        if(this.db.importData(e.target.result)) this.showToast("데이터 복원 완료");
+                        try {
+                            const data = JSON.parse(e.target.result);
+                            // Basic validation
+                            if (data.cars && Array.isArray(data.cars)) {
+                                this.db = data;
+                                Backend.save(this.db); // Save to local immediately
+                                this.router.current = 'car-list';
+                                this.showToast('데이터베이스를 가져왔습니다.', 'success');
+                            } else {
+                                throw new Error('Invalid format');
+                            }
+                        } catch (err) {
+                            this.showToast('올바르지 않은 차계부 파일입니다.', 'error');
+                        }
                     };
                     reader.readAsText(file);
+                    // Reset input
+                    event.target.value = '';
                 },
 
-                // --- Log Logic ---
-                get currentLogs() {
-                    if (!this.currentVehicle) return [];
-                    let logs = [];
-                    if (this.activeTab === 'fuel') logs = this.currentVehicle.logs.fuel;
-                    else if (this.activeTab === 'maint') logs = this.currentVehicle.logs.maint;
-                    else if (this.activeTab === 'other') logs = this.currentVehicle.logs.other;
-                    
-                    return logs.filter(log => {
-                        const dateMatch = (!this.filterDateStart || log.date >= this.filterDateStart) &&
-                                          (!this.filterDateEnd || log.date <= this.filterDateEnd);
-                        
-                        let typeMatch = true;
-                        if (this.activeTab === 'maint' && this.filterType !== 'all') {
-                            typeMatch = log.type === this.filterType;
-                        }
+                // --- Utilities ---
 
-                        const searchTarget = [log.item, log.place, log.memo].join(' ').toLowerCase();
-                        const searchMatch = !this.searchTerm || searchTarget.includes(this.searchTerm.toLowerCase());
-
-                        return dateMatch && typeMatch && searchMatch;
-                    }).sort((a, b) => new Date(b.date) - new Date(a.date));
+                showToast(message, type = 'info') {
+                    const id = Date.now();
+                    this.toasts.push({ id, message, type, visible: true });
+                    setTimeout(() => {
+                        const index = this.toasts.findIndex(t => t.id === id);
+                        if (index > -1) this.toasts[index].visible = false;
+                    }, 3000);
+                    setTimeout(() => {
+                        this.toasts = this.toasts.filter(t => t.id !== id);
+                    }, 3300);
                 },
 
-                get paginatedLogs() {
-                    const start = (this.page - 1) * this.itemsPerPage;
-                    return this.currentLogs.slice(start, start + this.itemsPerPage);
-                },
-
-                // --- Form Handling ---
-                openAddForm() {
-                    const today = new Date().toISOString().slice(0, 10);
-                    // Get latest odometer if available
-                    const maxOdo = this.getMaxOdo();
-                    
-                    this.logForm = {
-                        id: Date.now(),
-                        date: today,
-                        odo: maxOdo || 0,
-                        place: '', memo: '', cost: '',
-                        // Defaults
-                        fuelType: 'full', pricePerUnit: '', volume: '',
-                        maintType: 'repair', item: ''
-                    };
-                    this.showAddForm = true;
-                },
-
-                closeAddForm() {
-                    this.showAddForm = false;
-                },
-
-                getTabName() {
-                    if (this.activeTab === 'fuel') return '주유';
-                    if (this.activeTab === 'maint') return '정비';
-                    if (this.activeTab === 'other') return '지출';
-                    return '';
-                },
-
-                saveLog() {
-                    // Basic Validation
-                    if (!this.logForm.date) return alert("날짜를 입력해주세요.");
-                    
-                    // Logic based on tab
-                    const tab = this.activeTab;
-                    const log = { ...this.logForm, cost: Number(this.logForm.cost) || 0 };
-
-                    if (tab === 'fuel') {
-                        // Efficiency Calc
-                        const prevFull = this.currentVehicle.logs.fuel
-                            .filter(l => l.fuelType === 'full' && l.date < log.date)
-                            .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
-                        
-                        if (prevFull && log.fuelType === 'full' && log.volume > 0) {
-                            const dist = log.odo - prevFull.odo;
-                            if (dist > 0) {
-                                log.efficiency = (dist / log.volume).toFixed(1);
-                                log.distance = dist;
-                            }
-                        }
-                        this.currentVehicle.logs.fuel.push(log);
-                    } else if (tab === 'maint') {
-                        if (!log.item) return alert("정비 항목을 입력해주세요.");
-                        this.currentVehicle.logs.maint.push(log);
-                    } else {
-                        if (!log.item) return alert("지출 항목을 입력해주세요.");
-                        this.currentVehicle.logs.other.push(log);
-                    }
-
-                    this.db.save();
-                    this.closeAddForm();
-                    this.showToast("저장되었습니다.");
-                },
-
-                removeLog(tab, id) {
-                    if(!confirm("삭제하시겠습니까?")) return;
-                    const target = this.currentVehicle.logs[tab];
-                    this.currentVehicle.logs[tab] = target.filter(l => l.id !== id);
-                    this.db.save();
-                },
-
-                // --- Maintenance Timer ---
-                get maintenanceCards() {
-                    if (!this.currentVehicle) return [];
-                    const rules = [
-                        { name: '엔진오일', km: 10000 },
-                        { name: '타이어', km: 50000 },
-                        { name: '에어컨필터', km: 10000 },
-                        { name: '브레이크패드', km: 40000 }
-                    ];
-
-                    const currentOdo = this.getMaxOdo();
-
-                    return rules.map(rule => {
-                        const lastMaint = this.currentVehicle.logs.maint
-                            .filter(l => l.item && l.item.includes(rule.name))
-                            .sort((a, b) => b.odo - a.odo)[0];
-
-                        const lastOdo = lastMaint ? Number(lastMaint.odo) : 0;
-                        const nextKm = lastOdo + rule.km;
-                        const remaining = nextKm - currentOdo;
-                        
-                        // Calculate percentage used
-                        let percent = 0;
-                        if (currentOdo > lastOdo) {
-                            percent = Math.min(((currentOdo - lastOdo) / rule.km) * 100, 100);
-                        }
-
-                        return {
-                            name: rule.name,
-                            nextKm: nextKm,
-                            remainingKm: remaining,
-                            percent: Math.floor(percent)
-                        };
-                    }).sort((a, b) => b.percent - a.percent);
-                },
-
-                getMaxOdo() {
-                    if (!this.currentVehicle) return 0;
-                    const allLogs = [
-                        ...this.currentVehicle.logs.fuel,
-                        ...this.currentVehicle.logs.maint,
-                        ...this.currentVehicle.logs.other
-                    ];
-                    if (allLogs.length === 0) return 0;
-                    return Math.max(...allLogs.map(l => Number(l.odo) || 0));
-                },
-
-                // --- Place Autocomplete Helpers ---
-                get placeSuggestions() {
-                    if (!this.currentVehicle) return [];
-                    const places = new Set();
-                    const add = (arr) => arr.forEach(x => { if(x.place) places.add(x.place) });
-                    
-                    add(this.currentVehicle.logs.fuel);
-                    add(this.currentVehicle.logs.maint);
-                    add(this.currentVehicle.logs.other);
-                    
-                    return Array.from(places).sort();
-                },
-
-                resetFilters() {
-                    this.searchTerm = '';
-                    this.filterDateStart = '';
-                    this.filterDateEnd = '';
-                    this.page = 1;
-                },
-
-                showToast(msg) {
-                    this.toastMsg = msg;
-                    const el = document.getElementById('toast');
-                    el.classList.add('show');
-                    setTimeout(() => el.classList.remove('show'), 3000);
+                formatDistance(km) {
+                    return new Intl.NumberFormat('ko-KR').format(km) + ' km';
                 }
             }));
         });
