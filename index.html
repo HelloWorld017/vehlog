@@ -46,6 +46,13 @@
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
         }
+        
+        /* Hide number input arrows */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
     </style>
 
     <!-- Alpine.js -->
@@ -66,8 +73,8 @@
     <!-- Main Container -->
     <div class="relative z-10 max-w-5xl mx-auto px-4 py-8 h-screen flex flex-col">
         
-        <!-- Header (Visible only after onboarding) -->
-        <header x-show="router.current !== 'onboarding'" x-transition 
+        <!-- Header (Visible only after onboarding and not in detail view to save space, or simplify) -->
+        <header x-show="router.current === 'car-list'" x-transition 
                 class="flex justify-between items-center mb-8 pb-4 border-b border-dark-border">
             <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-lg bg-brand flex items-center justify-center text-white font-bold">
@@ -106,8 +113,6 @@
         <!-- View: Onboarding -->
         <main x-show="router.current === 'onboarding'" 
               x-transition:enter="transition ease-out duration-300 delay-100"
-              x-transition:enter-start="opacity-0 translate-y-4"
-              x-transition:enter-end="opacity-100 translate-y-0"
               class="flex-1 flex flex-col justify-center items-center text-center">
             
             <div class="mb-8 relative">
@@ -154,11 +159,9 @@
             </div>
         </main>
 
-        <!-- View: Car Selection -->
+        <!-- View: Car Selection (List) -->
         <main x-show="router.current === 'car-list'" 
               x-transition:enter="transition ease-out duration-300"
-              x-transition:enter-start="opacity-0 scale-95"
-              x-transition:enter-end="opacity-100 scale-100"
               class="flex-1">
             
             <div class="flex justify-between items-end mb-6">
@@ -188,7 +191,7 @@
                                     <i data-lucide="chevron-right" class="w-4 h-4 text-gray-500 group-hover:text-white transition-colors"></i>
                                 </div>
                                 <h3 class="text-xl font-bold text-white tracking-tight" x-text="car.number"></h3>
-                                <p class="text-gray-400 text-sm" x-text="car.model"></p>
+                                <p class="text-gray-400 text-sm" x-text="car.maker + ' ' + car.model"></p>
                             </div>
                             
                             <div class="mt-6 pt-4 border-t border-dark-700 flex justify-between text-xs text-gray-500">
@@ -208,6 +211,159 @@
                     </div>
                 </template>
             </div>
+        </main>
+
+        <!-- View: Car Detail -->
+        <main x-show="router.current === 'car-detail'"
+              x-transition:enter="transition ease-out duration-300"
+              x-transition:enter-start="opacity-0 translate-x-4"
+              x-transition:enter-end="opacity-100 translate-x-0"
+              class="flex-1 flex flex-col overflow-hidden h-full">
+            
+            <!-- Detail Header -->
+            <div class="flex items-center gap-4 mb-6 pt-2">
+                <button @click="router.current = 'car-list'" class="p-2 -ml-2 rounded-full hover:bg-dark-700 text-gray-400 hover:text-white transition-colors">
+                    <i data-lucide="arrow-left" class="w-6 h-6"></i>
+                </button>
+                <div>
+                    <h2 class="text-2xl font-bold text-white tracking-tight" x-text="activeCar?.number"></h2>
+                    <p class="text-sm text-gray-400" x-text="activeCar?.model ? (activeCar?.maker + ' ' + activeCar?.model) : '차종 정보 없음'"></p>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex gap-1 mb-6 border-b border-dark-600 overflow-x-auto">
+                <template x-for="tab in ['info', 'refuel', 'maintenance', 'etc']">
+                    <button @click="detail.tab = tab"
+                            class="px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap"
+                            :class="detail.tab === tab ? 'border-brand text-white' : 'border-transparent text-gray-400 hover:text-gray-200 hover:border-dark-500'">
+                        <span x-text="{
+                            'info': '차량 정보',
+                            'refuel': '주유',
+                            'maintenance': '정비',
+                            'etc': '기타'
+                        }[tab]"></span>
+                    </button>
+                </template>
+            </div>
+
+            <!-- Tab Content: Info -->
+            <div x-show="detail.tab === 'info'" class="flex-1 overflow-y-auto pb-20">
+                <div class="bg-dark-800 border border-dark-600 rounded-xl p-6 relative">
+                    
+                    <!-- Header & Edit Button -->
+                    <div class="flex justify-between items-start mb-6">
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                            <i data-lucide="info" class="w-5 h-5 text-brand"></i>
+                            기본 정보
+                        </h3>
+                        <button @click="toggleEditInfo()" 
+                                class="text-sm px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5"
+                                :class="detail.isEditing ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20' : 'bg-dark-700 text-gray-300 hover:bg-dark-600'">
+                            <i :data-lucide="detail.isEditing ? 'x' : 'pencil'" class="w-3.5 h-3.5"></i>
+                            <span x-text="detail.isEditing ? '취소' : '편집'"></span>
+                        </button>
+                    </div>
+
+                    <!-- View Mode -->
+                    <div x-show="!detail.isEditing" class="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
+                        <div class="space-y-1">
+                            <p class="text-xs text-gray-500 font-medium uppercase tracking-wider">차량번호</p>
+                            <p class="text-lg text-white font-medium" x-text="activeCar?.number || '-'"></p>
+                        </div>
+                         <div class="space-y-1">
+                            <p class="text-xs text-gray-500 font-medium uppercase tracking-wider">제조사</p>
+                            <p class="text-lg text-white font-medium" x-text="activeCar?.maker || '-'"></p>
+                        </div>
+                        <div class="space-y-1">
+                            <p class="text-xs text-gray-500 font-medium uppercase tracking-wider">차종</p>
+                            <p class="text-lg text-white font-medium" x-text="activeCar?.model || '-'"></p>
+                        </div>
+                        <div class="space-y-1">
+                            <p class="text-xs text-gray-500 font-medium uppercase tracking-wider">등급 (Trim)</p>
+                            <p class="text-lg text-white font-medium" x-text="activeCar?.grade || '-'"></p>
+                        </div>
+                        <div class="space-y-1">
+                            <p class="text-xs text-gray-500 font-medium uppercase tracking-wider">연식</p>
+                            <p class="text-lg text-white font-medium" x-text="activeCar?.year ? activeCar?.year + '년' : '-'"></p>
+                        </div>
+                        <div class="space-y-1">
+                            <p class="text-xs text-gray-500 font-medium uppercase tracking-wider">연료</p>
+                            <p class="text-lg text-white font-medium" x-text="activeCar?.fuelType || '-'"></p>
+                        </div>
+                        <div class="space-y-1">
+                            <p class="text-xs text-gray-500 font-medium uppercase tracking-wider">배기량</p>
+                            <p class="text-lg text-white font-medium" x-text="activeCar?.displacement ? formatNumber(activeCar?.displacement) + ' cc' : '-'"></p>
+                        </div>
+                         <div class="space-y-1">
+                            <p class="text-xs text-gray-500 font-medium uppercase tracking-wider">누적 주행거리</p>
+                            <p class="text-lg text-white font-medium" x-text="activeCar?.totalDistance ? formatDistance(activeCar?.totalDistance) : '-'"></p>
+                        </div>
+                    </div>
+
+                    <!-- Edit Mode -->
+                    <form x-show="detail.isEditing" @submit.prevent="saveCarInfo" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="space-y-1.5">
+                            <label class="text-xs text-gray-400 font-medium">차량번호</label>
+                            <input type="text" x-model="detail.editBuffer.number" required
+                                   class="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-xs text-gray-400 font-medium">제조사</label>
+                            <input type="text" x-model="detail.editBuffer.maker" placeholder="예: 현대, BMW"
+                                   class="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-xs text-gray-400 font-medium">차종</label>
+                            <input type="text" x-model="detail.editBuffer.model" placeholder="예: 쏘나타, 520i"
+                                   class="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-xs text-gray-400 font-medium">등급 (Trim)</label>
+                            <input type="text" x-model="detail.editBuffer.grade" placeholder="예: 프리미엄, M Sport"
+                                   class="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-xs text-gray-400 font-medium">연식</label>
+                            <input type="number" x-model="detail.editBuffer.year" placeholder="YYYY"
+                                   class="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand">
+                        </div>
+                         <div class="space-y-1.5">
+                            <label class="text-xs text-gray-400 font-medium">연료</label>
+                            <select x-model="detail.editBuffer.fuelType" class="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand">
+                                <option value="휘발유">휘발유</option>
+                                <option value="경유">경유</option>
+                                <option value="LPG">LPG</option>
+                                <option value="전기">전기</option>
+                                <option value="하이브리드">하이브리드</option>
+                            </select>
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-xs text-gray-400 font-medium">배기량 (cc)</label>
+                            <input type="number" x-model="detail.editBuffer.displacement" placeholder="0"
+                                   class="w-full bg-dark-900 border border-dark-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-xs text-gray-400 font-medium">현재 주행거리 (수정불가)</label>
+                            <input type="text" :value="formatDistance(detail.editBuffer.totalDistance || 0)" disabled
+                                   class="w-full bg-dark-900/50 border border-dark-600 rounded-lg px-3 py-2 text-gray-500 cursor-not-allowed">
+                             <p class="text-[10px] text-gray-500 mt-1">* 주행거리는 기록 추가 시 자동 업데이트됩니다.</p>
+                        </div>
+
+                        <div class="col-span-full pt-4 flex justify-end">
+                            <button type="submit" class="bg-brand hover:bg-brand-hover text-white px-6 py-2 rounded-lg font-medium transition-colors shadow-lg shadow-brand/20">
+                                변경사항 저장
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+             <!-- Placeholder for other tabs -->
+             <div x-show="detail.tab !== 'info'" class="flex-1 flex flex-col items-center justify-center text-gray-500">
+                <i data-lucide="wrench" class="w-10 h-10 mb-2 opacity-20"></i>
+                <p>준비 중인 기능입니다.</p>
+             </div>
         </main>
     </div>
 
@@ -251,8 +407,13 @@
                                class="w-full bg-dark-900 border border-dark-600 rounded-md px-3 py-2 text-white focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand placeholder-gray-600">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-gray-400 mb-1">제조사 및 차종</label>
-                        <input type="text" x-model="forms.car.model" required placeholder="예: 현대 쏘나타" 
+                        <label class="block text-xs font-medium text-gray-400 mb-1">제조사 (Maker)</label>
+                        <input type="text" x-model="forms.car.maker" required placeholder="예: 현대" 
+                               class="w-full bg-dark-900 border border-dark-600 rounded-md px-3 py-2 text-white focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand placeholder-gray-600">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-400 mb-1">차종 (Model)</label>
+                        <input type="text" x-model="forms.car.model" required placeholder="예: 쏘나타" 
                                class="w-full bg-dark-900 border border-dark-600 rounded-md px-3 py-2 text-white focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand placeholder-gray-600">
                     </div>
                     <div class="grid grid-cols-2 gap-3">
@@ -384,9 +545,6 @@
 
             // 삭제 (로그아웃)
             clear() {
-                // 실제 데이터를 삭제하지 않고 메모리에서만 언로드하는 개념이지만,
-                // LocalStorage 모드이므로 사용자가 원하면 유지하거나 삭제할 수 있음.
-                // 여기서는 현재 세션 상태만 초기화함.
                 return true; 
             }
         };
@@ -395,17 +553,25 @@
         document.addEventListener('alpine:init', () => {
             Alpine.data('app', () => ({
                 router: {
-                    current: 'onboarding' // onboarding | car-list | car-detail (추후)
+                    current: 'onboarding' // onboarding | car-list | car-detail
                 },
-                db: null, // Loaded Data
+                db: null, 
                 
                 // UI States
                 modal: {
                     active: false,
                     type: null // 'add-car' | 'webdav-config'
                 },
+                // Detail View State
+                detail: {
+                    carId: null,
+                    tab: 'info', // info | refuel | maintenance | etc
+                    isEditing: false,
+                    editBuffer: {}
+                },
+                
                 forms: {
-                    car: { number: '', model: '', year: '', fuelType: '휘발유', totalDistance: '' }
+                    car: { number: '', maker: '', model: '', year: '', fuelType: '휘발유', totalDistance: '' }
                 },
                 toasts: [],
 
@@ -417,6 +583,9 @@
                     this.$watch('modal.active', (val) => {
                         if(val) this.$nextTick(() => lucide.createIcons());
                     });
+                    this.$watch('detail.tab', () => {
+                        this.$nextTick(() => lucide.createIcons());
+                    });
 
                     // Check for existing DB
                     const existingData = Backend.load();
@@ -427,6 +596,12 @@
                     }
                     
                     lucide.createIcons();
+                },
+
+                // --- Computed Getters ---
+                get activeCar() {
+                    if (!this.db || !this.detail.carId) return null;
+                    return this.db.cars.find(c => c.id === this.detail.carId) || null;
                 },
 
                 // --- Actions ---
@@ -442,7 +617,7 @@
                     this.modal.active = true;
                     // Reset forms
                     if (type === 'add-car') {
-                        this.forms.car = { number: '', model: '', year: new Date().getFullYear(), fuelType: '휘발유', totalDistance: '' };
+                        this.forms.car = { number: '', maker: '', model: '', year: new Date().getFullYear(), fuelType: '휘발유', totalDistance: '' };
                     }
                 },
 
@@ -455,6 +630,8 @@
                     const newCar = {
                         id: crypto.randomUUID(),
                         ...this.forms.car,
+                        grade: '',          // 초기값 없음
+                        displacement: '',   // 초기값 없음
                         totalDistance: Number(this.forms.car.totalDistance) || 0,
                         createdAt: new Date().toISOString()
                     };
@@ -467,14 +644,43 @@
                 },
 
                 selectCar(carId) {
-                    // 추후 구현: 상세 페이지 이동
-                    this.showToast(`차량 선택됨: ${carId} (상세화면 준비중)`, 'info');
+                    this.detail.carId = carId;
+                    this.detail.tab = 'info';
+                    this.detail.isEditing = false;
+                    this.router.current = 'car-detail';
+                },
+
+                toggleEditInfo() {
+                    if (this.detail.isEditing) {
+                        // Cancel editing
+                        this.detail.isEditing = false;
+                    } else {
+                        // Start editing: copy to buffer
+                        this.detail.editBuffer = JSON.parse(JSON.stringify(this.activeCar));
+                        this.detail.isEditing = true;
+                    }
+                },
+
+                saveCarInfo() {
+                    const index = this.db.cars.findIndex(c => c.id === this.detail.carId);
+                    if (index > -1) {
+                        // Update Fields
+                        this.db.cars[index] = {
+                            ...this.db.cars[index],
+                            ...this.detail.editBuffer,
+                            // Ensure numeric type
+                            year: Number(this.detail.editBuffer.year),
+                            displacement: Number(this.detail.editBuffer.displacement)
+                        };
+                        this.autoSave();
+                        this.detail.isEditing = false;
+                        this.showToast('차량 정보가 저장되었습니다.', 'success');
+                    }
                 },
 
                 connectWebDAVSim() {
                     this.closeModal();
                     this.showToast('WebDAV 연결 시뮬레이션: 성공', 'success');
-                    // 실제로는 여기서 WebDAV 설정 저장 및 데이터 pull
                     if (!this.db) {
                         this.db = Backend.initNew();
                         this.db.config.type = 'webdav';
@@ -483,7 +689,6 @@
                 },
 
                 closeDatabase() {
-                    // 현재 메모리의 DB를 비우고 온보딩으로 이동
                     this.db = null;
                     this.router.current = 'onboarding';
                     this.showToast('데이터베이스를 닫았습니다.', 'info');
@@ -494,7 +699,6 @@
                 autoSave() {
                     if (this.db) {
                         Backend.save(this.db);
-                        // WebDAV인 경우 미저장 상태 표시 로직 추가 가능
                     }
                 },
 
@@ -522,10 +726,9 @@
                     reader.onload = (e) => {
                         try {
                             const data = JSON.parse(e.target.result);
-                            // Basic validation
                             if (data.cars && Array.isArray(data.cars)) {
                                 this.db = data;
-                                Backend.save(this.db); // Save to local immediately
+                                Backend.save(this.db); 
                                 this.router.current = 'car-list';
                                 this.showToast('데이터베이스를 가져왔습니다.', 'success');
                             } else {
@@ -536,7 +739,6 @@
                         }
                     };
                     reader.readAsText(file);
-                    // Reset input
                     event.target.value = '';
                 },
 
@@ -556,11 +758,15 @@
 
                 formatDistance(km) {
                     return new Intl.NumberFormat('ko-KR').format(km) + ' km';
+                },
+                
+                formatNumber(num) {
+                    return new Intl.NumberFormat('ko-KR').format(num);
                 }
             }));
         });
-
-        Alpine.start();
+		
+		Alpine.start();
     </script>
 </body>
 </html>
