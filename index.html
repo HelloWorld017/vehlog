@@ -13,72 +13,43 @@
     />
 
     <!-- Tailwind CSS -->
-    <script src="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.19/lib/index.min.js"></script>
-    <script>
-      tailwind.config = {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            colors: {
-              border: 'hsl(var(--border))',
-              input: 'hsl(var(--input))',
-              ring: 'hsl(var(--ring))',
-              background: 'hsl(var(--background))',
-              foreground: 'hsl(var(--foreground))',
-              primary: {
-                DEFAULT: 'hsl(var(--primary))',
-                foreground: 'hsl(var(--primary-foreground))',
-              },
-              secondary: {
-                DEFAULT: 'hsl(var(--secondary))',
-                foreground: 'hsl(var(--secondary-foreground))',
-              },
-              muted: {
-                DEFAULT: 'hsl(var(--muted))',
-                foreground: 'hsl(var(--muted-foreground))',
-              },
-              accent: {
-                DEFAULT: 'hsl(var(--accent))',
-                foreground: 'hsl(var(--accent-foreground))',
-              },
-              popover: {
-                DEFAULT: 'hsl(var(--popover))',
-                foreground: 'hsl(var(--popover-foreground))',
-              },
-              destructive: {
-                DEFAULT: 'hsl(var(--destructive))',
-                foreground: 'hsl(var(--destructive-foreground))',
-              },
-              dark: {
-                950: '#09090b',
-                900: '#18181b',
-                800: '#27272a',
-                700: '#3f3f46',
-              },
-              brand: {
-                DEFAULT: '#6366f1',
-                hover: '#4f46e5',
-              },
-            },
-            borderRadius: {
-              lg: 'var(--radius)',
-              md: 'calc(var(--radius) - 2px)',
-              sm: 'calc(var(--radius) - 4px)',
-            },
-            fontFamily: {
-              sans: [
-                'Pretendard',
-                '-apple-system',
-                'BlinkMacSystemFont',
-                'system-ui',
-                'Roboto',
-                'sans-serif',
-              ],
-            },
-          },
-        },
-      };
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.1.18"></script>
+    <style type="text/tailwindcss">
+      @theme {
+        --color-border: hsl(var(--border));
+        --color-input: hsl(var(--input));
+        --color-ring: hsl(var(--ring));
+        --color-background: hsl(var(--background));
+        --color-foreground: hsl(var(--foreground));
+
+        --color-primary: hsl(var(--primary));
+        --color-primary-foreground: hsl(var(--primary-foreground));
+        --color-secondary: hsl(var(--secondary));
+        --color-secondary-foreground: hsl(var(--secondary-foreground));
+        --color-muted: hsl(var(--muted));
+        --color-muted-foreground: hsl(var(--muted-foreground));
+        --color-accent: hsl(var(--accent));
+        --color-accent-foreground: hsl(var(--accent-foreground));
+        --color-popover: hsl(var(--popover));
+        --color-popover-foreground: hsl(var(--popover-foreground));
+        --color-destructive: hsl(var(--destructive));
+        --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+        --color-dark-950: #09090b;
+        --color-dark-900: #18181b;
+        --color-dark-800: #27272a;
+        --color-dark-700: #3f3f46;
+
+        --color-brand: #6366f1;
+        --color-brand-hover: #4f46e5;
+
+        --radius-lg: var(--radius);
+        --radius-md: calc(var(--radius) - 2px);
+        --radius-sm: calc(var(--radius) - 4px);
+
+        --font-sans: "Pretendard", "-apple-system", "BlinkMacSystemFont", "system-ui", "Roboto", "sans-serif";
+      }
+    </style>
     <style>
       :root {
         --background: 240 10% 3.9%;
@@ -300,7 +271,7 @@
             @click="openModal('add-car')"
             class="focus-visible:ring-ring bg-primary text-primary-foreground hover:bg-primary/90
               inline-flex h-10 items-center justify-center rounded-md px-4 py-2 text-sm font-medium
-              shadow-sm transition-colors focus-visible:ring-1 focus-visible:outline-none"
+              shadow-xs transition-colors focus-visible:ring-1 focus-visible:outline-none"
           >
             <i x-lucide="plus" class="mr-2 h-4 w-4"></i> 차량 추가
           </button>
@@ -434,7 +405,7 @@
                       type="text"
                       x-model="detail.carInfoEditBuffer.number"
                       class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                        bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
+                        bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
                         focus-visible:ring-1 focus-visible:outline-none"
                     />
                   </div>
@@ -444,7 +415,7 @@
                       type="text"
                       x-model="detail.carInfoEditBuffer.maker"
                       class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                        bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
+                        bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
                         focus-visible:ring-1 focus-visible:outline-none"
                     />
                   </div>
@@ -454,7 +425,7 @@
                       type="text"
                       x-model="detail.carInfoEditBuffer.model"
                       class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                        bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
+                        bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
                         focus-visible:ring-1 focus-visible:outline-none"
                     />
                   </div>
@@ -464,7 +435,7 @@
                       type="text"
                       x-model="detail.carInfoEditBuffer.grade"
                       class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                        bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
+                        bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
                         focus-visible:ring-1 focus-visible:outline-none"
                     />
                   </div>
@@ -474,7 +445,7 @@
                       type="number"
                       x-model="detail.carInfoEditBuffer.year"
                       class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                        bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
+                        bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
                         focus-visible:ring-1 focus-visible:outline-none"
                     />
                   </div>
@@ -483,7 +454,7 @@
                     <select
                       x-model="detail.carInfoEditBuffer.fuelType"
                       class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                        bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
+                        bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
                         focus-visible:ring-1 focus-visible:outline-none"
                     >
                       <option>휘발유</option>
@@ -593,9 +564,9 @@
                       <!-- Hover Line & Dot (Custom Scaling) -->
                       <g x-show="hover && hoverIndex > -1">
                         <line
-                          :x1="points[hoverIndex]?.x"
+                          :x1="points[hoverIndex]?.x ?? 0"
                           y1="0"
-                          :x2="points[hoverIndex]?.x"
+                          :x2="points[hoverIndex]?.x ?? 0"
                           y2="100"
                           stroke="white"
                           stroke-width="1"
@@ -631,7 +602,7 @@
                   x-model="filters.search"
                   placeholder="검색..."
                   class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                    bg-transparent py-1 pr-3 pl-9 text-sm shadow-sm transition-colors
+                    bg-transparent py-1 pr-3 pl-9 text-sm shadow-xs transition-colors
                     focus-visible:ring-1 focus-visible:outline-none"
                 />
               </div>
@@ -657,7 +628,7 @@
                   <select
                     x-model="filters.type"
                     class="border-input focus-visible:ring-ring flex h-9 w-[80px] rounded-md border
-                      bg-transparent px-2 py-1 text-xs shadow-sm transition-colors
+                      bg-transparent px-2 py-1 text-xs shadow-xs transition-colors
                       focus-visible:ring-1 focus-visible:outline-none"
                   >
                     <option value="all">전체</option>
@@ -829,7 +800,7 @@
                 required
                 placeholder="예: 12가 3456"
                 class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                  bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:ring-1
+                  bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:ring-1
                   focus-visible:outline-none"
               />
             </div>
@@ -841,7 +812,7 @@
                   x-model="forms.car.maker"
                   required
                   class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                    bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
+                    bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
                     focus-visible:ring-1 focus-visible:outline-none"
                 />
               </div>
@@ -852,7 +823,7 @@
                   x-model="forms.car.model"
                   required
                   class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                    bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
+                    bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
                     focus-visible:ring-1 focus-visible:outline-none"
                 />
               </div>
@@ -865,7 +836,7 @@
                   x-model="forms.car.year"
                   required
                   class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                    bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
+                    bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
                     focus-visible:ring-1 focus-visible:outline-none"
                 />
               </div>
@@ -874,7 +845,7 @@
                 <select
                   x-model="forms.car.fuelType"
                   class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                    bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
+                    bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
                     focus-visible:ring-1 focus-visible:outline-none"
                 >
                   <option>휘발유</option>
@@ -891,7 +862,7 @@
                 type="number"
                 x-model="forms.car.totalDistance"
                 class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                  bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:ring-1
+                  bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:ring-1
                   focus-visible:outline-none"
               />
             </div>
@@ -921,7 +892,7 @@
                   x-model="forms.record.date"
                   required
                   class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                    bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
+                    bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
                     focus-visible:ring-1 focus-visible:outline-none"
                 />
               </div>
@@ -935,7 +906,7 @@
                   @focus="autocomplete.open = true"
                   @input="autocomplete.open = true"
                   class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                    bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
+                    bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
                     focus-visible:ring-1 focus-visible:outline-none"
                   placeholder="장소 검색 또는 입력"
                 />
@@ -969,7 +940,7 @@
                   x-model="forms.record.odometer"
                   required
                   class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                    bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
+                    bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
                     focus-visible:ring-1 focus-visible:outline-none"
                 />
               </div>
@@ -981,7 +952,7 @@
                   @input="calculateVolume"
                   required
                   class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                    bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
+                    bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
                     focus-visible:ring-1 focus-visible:outline-none"
                 />
               </div>
@@ -994,7 +965,7 @@
                   <select
                     x-model="forms.record.subType"
                     class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                      bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
+                      bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
                       focus-visible:ring-1 focus-visible:outline-none"
                   >
                     <option value="full">가득(상한)</option>
@@ -1008,7 +979,7 @@
                     x-model="forms.record.unitPrice"
                     @input="calculateVolume"
                     class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                      bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
+                      bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
                       focus-visible:ring-1 focus-visible:outline-none"
                   />
                 </div>
@@ -1021,7 +992,7 @@
                     step="0.01"
                     x-model="forms.record.volume"
                     class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                      bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
+                      bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
                       focus-visible:ring-1 focus-visible:outline-none"
                   />
                 </div>
@@ -1031,7 +1002,7 @@
                     type="number"
                     x-model="forms.record.fuelGauge"
                     class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                      bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
+                      bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
                       focus-visible:ring-1 focus-visible:outline-none"
                   />
                 </div>
@@ -1048,7 +1019,7 @@
                   <select
                     x-model="forms.record.subType"
                     class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                      bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
+                      bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
                       focus-visible:ring-1 focus-visible:outline-none"
                   >
                     <option value="maintenance">정비</option>
@@ -1062,7 +1033,7 @@
                     x-model="forms.record.item"
                     placeholder="엔진오일 교환"
                     class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                      bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
+                      bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
                       focus-visible:ring-1 focus-visible:outline-none"
                   />
                 </div>
@@ -1072,7 +1043,7 @@
                 <textarea
                   x-model="forms.record.memo"
                   class="border-input placeholder:text-muted-foreground focus-visible:ring-ring flex
-                    min-h-[60px] w-full rounded-md border bg-transparent px-3 py-2 text-sm shadow-sm
+                    min-h-[60px] w-full rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs
                     focus-visible:ring-1 focus-visible:outline-none"
                 >
                 </textarea>
@@ -1087,7 +1058,7 @@
                   x-model="forms.record.item"
                   placeholder="세차, 주차비 등"
                   class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                    bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
+                    bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
                     focus-visible:ring-1 focus-visible:outline-none"
                 />
               </div>
@@ -1096,7 +1067,7 @@
                 <textarea
                   x-model="forms.record.memo"
                   class="border-input placeholder:text-muted-foreground focus-visible:ring-ring flex
-                    min-h-[60px] w-full rounded-md border bg-transparent px-3 py-2 text-sm shadow-sm
+                    min-h-[60px] w-full rounded-md border bg-transparent px-3 py-2 text-sm shadow-xs
                     focus-visible:ring-1 focus-visible:outline-none"
                 >
                 </textarea>
@@ -1327,21 +1298,27 @@
 
           getMonthlyRefuelCost() {
             if (!this.db || !this.detail.carId) return { current: 0, diff: 0 };
-            const now = new Date();
-            const currentMonth = now.toISOString().slice(0, 7); // YYYY-MM
-            const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-            const lastMonth = lastMonthDate.toISOString().slice(0, 7);
+            const currentDate = new Date();
+            const lastMonthDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
 
             const records = this.db.records.filter(
               r => r.carId === this.detail.carId && r.type === 'refuel'
             );
 
             const curTotal = records
-              .filter(r => r.date.startsWith(currentMonth))
+              .filter(r => {
+                const date = new Date(r.date);
+                return date.getFullYear() === currentDate.getFullYear()
+                  && date.getMonth() === currentDate.getMonth();
+              })
               .reduce((acc, r) => acc + r.amount, 0);
 
             const lastTotal = records
-              .filter(r => r.date.startsWith(lastMonth))
+              .filter(r => {
+                const date = new Date(r.date);
+                return date.getFullYear() === lastMonthDate.getFullYear()
+                  && date.getMonth() === lastMonthDate.getMonth();
+              })
               .reduce((acc, r) => acc + r.amount, 0);
 
             return { current: curTotal, diff: curTotal - lastTotal };
