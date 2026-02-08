@@ -176,7 +176,7 @@
               class="animate-in fade-in slide-in-from-left-2 flex items-center gap-3 duration-300"
             >
               <button
-                @click="router.current = 'car-list';"
+                @click="router.current = 'car-list'"
                 class="hover:bg-accent hover:border-border flex h-9 w-9 items-center justify-center
                   rounded-md border border-transparent transition-colors"
               >
@@ -191,9 +191,9 @@
         </div>
 
         <div class="flex gap-2">
-          <div x-data="{ open: false }" class="relative">
+          <div x-data="({ open: false })" class="relative">
             <button
-              @click="open = !open;"
+              @click="open = !open"
               class="hover:bg-accent text-muted-foreground hover:text-foreground flex h-9 w-9
                 items-center justify-center rounded-md transition-colors"
             >
@@ -201,7 +201,7 @@
             </button>
             <div
               x-show="open"
-              @click.outside="open = false;"
+              @click.outside="open = false"
               x-transition:enter="transition ease-out duration-100"
               x-transition:enter-start="opacity-0 scale-95"
               x-transition:enter-end="opacity-100 scale-100"
@@ -209,23 +209,20 @@
                 shadow-xl"
             >
               <button
-                @click="exportDB();
-open = false;"
+                @click="exportDB(); open = false"
                 class="hover:bg-accent flex w-full items-center gap-2 px-4 py-2 text-left text-sm"
               >
                 <i x-lucide="download" class="h-4 w-4"></i> 내보내기 (JSON)
               </button>
               <button
-                @click="triggerImport();
-open = false;"
+                @click="triggerImport(); open = false"
                 class="hover:bg-accent flex w-full items-center gap-2 px-4 py-2 text-left text-sm"
               >
                 <i x-lucide="upload" class="h-4 w-4"></i> 가져오기
               </button>
               <div class="bg-border my-1 h-px"></div>
               <button
-                @click="closeDatabase();
-open = false;"
+                @click="closeDatabase(); open = false"
                 class="hover:bg-accent flex w-full items-center gap-2 px-4 py-2 text-left text-sm
                   text-red-400"
               >
@@ -257,7 +254,7 @@ open = false;"
         </p>
         <div class="grid w-full max-w-2xl gap-4 md:grid-cols-2">
           <button
-            @click="createLocalDatabase();"
+            @click="createLocalDatabase()"
             class="group border-border bg-card hover:bg-accent relative overflow-hidden rounded-xl
               border p-6 text-left transition-all duration-300"
           >
@@ -271,7 +268,7 @@ open = false;"
             <p class="text-muted-foreground text-sm">로컬 저장소에 새로운 차계부를 생성합니다.</p>
           </button>
           <button
-            @click="openModal('webdav-config');"
+            @click="openModal('webdav-config')"
             class="group border-border bg-card hover:bg-accent rounded-xl border p-6 text-left
               transition-all duration-300"
           >
@@ -300,7 +297,7 @@ open = false;"
             <p class="text-muted-foreground mt-1 text-sm">관리할 차량을 선택하거나 추가하세요.</p>
           </div>
           <button
-            @click="openModal('add-car');"
+            @click="openModal('add-car')"
             class="focus-visible:ring-ring bg-primary text-primary-foreground hover:bg-primary/90
               inline-flex h-10 items-center justify-center rounded-md px-4 py-2 text-sm font-medium
               shadow-sm transition-colors focus-visible:ring-1 focus-visible:outline-none"
@@ -311,7 +308,7 @@ open = false;"
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           <template x-for="car in db?.cars" :key="car.id">
             <div
-              @click="selectCar(car.id);"
+              @click="selectCar(car.id)"
               class="group bg-card border-border hover:border-brand/50 hover:bg-accent/50 relative
                 cursor-pointer rounded-xl border p-5 transition-all duration-200"
             >
@@ -365,7 +362,7 @@ open = false;"
         <div class="border-border mb-6 flex w-full items-center border-b">
           <template x-for="tab in ['info', 'refuel', 'maintenance', 'etc']">
             <button
-              @click="detail.tab = tab;"
+              @click="detail.tab = tab"
               class="hover:text-foreground relative px-4 py-2.5 text-sm font-medium
                 transition-colors"
               :class="detail.tab === tab ? 'text-brand' : 'text-muted-foreground'"
@@ -397,7 +394,7 @@ open = false;"
                   <i x-lucide="info" class="text-brand h-4 w-4"></i> 기본 정보
                 </h3>
                 <button
-                  @click="toggleEditInfo();"
+                  @click="toggleEditInfo()"
                   class="border-border hover:bg-accent flex items-center gap-1.5 rounded-md border
                     px-3 py-1.5 text-xs transition-colors"
                   :class="detail.isEditing ? 'text-red-400 border-red-900/50 bg-red-900/10' : 'text-muted-foreground'"
@@ -426,7 +423,7 @@ open = false;"
               <!-- Info Edit Form -->
               <form
                 x-show="detail.isEditing"
-                @submit.prevent="saveCarInfo;"
+                @submit.prevent="saveCarInfo"
                 class="grid grid-cols-1 gap-4 md:grid-cols-2"
               >
                 <div class="space-y-1.5">
@@ -540,64 +537,64 @@ open = false;"
 
               <!-- Card 2: Efficiency Graph (Refined) -->
               <div
-                x-data="{
-  hover: false,
-  hoverX: 0,
-  hoverIndex: -1,
-  points: [],
-  initChart() {
-    this.$watch('$store.app.detail.tab', () => this.calcPoints())
-    this.$watch('$store.app.db', () => this.calcPoints())
-    this.calcPoints()
-  },
-  calcPoints() {
-    const history = $store.app.getEfficiencyHistory()
-    if (history.length < 2) {
-      this.points = []
-      return
-    }
-    const maxVal = Math.max(...history.map(p => p.val))
-    const minVal = Math.min(...history.map(p => p.val))
-    const range = maxVal - minVal || 1
-    // Padding: top 20%, bottom 20%
-    const yBase = 80
-    const yScale = 60 / range
+                x-data="({
+                  hover: false,
+                  hoverX: 0,
+                  hoverIndex: -1,
+                  points: [],
+                  initChart() {
+                    this.$watch('$store.app.detail.tab', () => this.calcPoints());
+                    this.$watch('$store.app.db', () => this.calcPoints());
+                    this.calcPoints();
+                  },
+                  calcPoints() {
+                    const history = $store.app.getEfficiencyHistory();
+                    if (history.length < 2) {
+                      this.points = [];
+                      return;
+                    }
+                    const maxVal = Math.max(...history.map(p => p.val));
+                    const minVal = Math.min(...history.map(p => p.val));
+                    const range = maxVal - minVal || 1;
+                    // Padding: top 20%, bottom 20%
+                    const yBase = 80;
+                    const yScale = 60 / range;
 
-    this.points = history.map((pt, i) => ({
-      x: (i / (history.length - 1)) * 100,
-      y: 80 - (pt.val - minVal) * yScale,
-      val: pt.val,
-      date: pt.date,
-    }))
-  },
-  getPath() {
-    if (this.points.length < 2) return ''
-    return this.points.map((p, i) => (i === 0 ? 'M' : 'L') + `${p.x},${p.y}`).join(' ')
-  },
-  getAreaPath() {
-    if (this.points.length < 2) return ''
-    const path = this.getPath()
-    return `${path} L 100,100 L 0,100 Z`
-  },
-  handleMouseMove(e) {
-    const rect = e.currentTarget.getBoundingClientRect()
-    const x = ((e.clientX - rect.left) / rect.width) * 100
-    // Find closest point
-    let minDist = 1000
-    this.points.forEach((p, i) => {
-      const dist = Math.abs(p.x - x)
-      if (dist < minDist) {
-        minDist = dist
-        this.hoverIndex = i
-      }
-    })
-    this.hoverX = this.points[this.hoverIndex].x
-    this.hover = true
-  },
-}"
-                x-init="initChart();"
-                @mousemove="handleMouseMove;"
-                @mouseleave="hover = false;"
+                    this.points = history.map((pt, i) => ({
+                      x: (i / (history.length - 1)) * 100,
+                      y: 80 - (pt.val - minVal) * yScale,
+                      val: pt.val,
+                      date: pt.date,
+                    }));
+                  },
+                  getPath() {
+                    if (this.points.length < 2) return '';
+                    return this.points.map((p, i) => (i === 0 ? 'M' : 'L') + `${p.x},${p.y}`).join(' ');
+                  },
+                  getAreaPath() {
+                    if (this.points.length < 2) return '';
+                    const path = this.getPath();
+                    return `${path} L 100,100 L 0,100 Z`;
+                  },
+                  handleMouseMove(e) {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const x = ((e.clientX - rect.left) / rect.width) * 100;
+                    // Find closest point
+                    let minDist = 1000;
+                    this.points.forEach((p, i) => {
+                      const dist = Math.abs(p.x - x);
+                      if (dist < minDist) {
+                        minDist = dist;
+                        this.hoverIndex = i;
+                      }
+                    });
+                    this.hoverX = this.points[this.hoverIndex].x;
+                    this.hover = true;
+                  },
+                })"
+                x-init="initChart()"
+                @mousemove="handleMouseMove"
+                @mouseleave="hover = false"
                 class="bg-card border-border group relative flex h-64 flex-col overflow-hidden
                   rounded-xl border p-4 select-none"
               >
@@ -734,7 +731,7 @@ open = false;"
                 </div>
               </div>
               <button
-                @click="openModal('add-record');"
+                @click="openModal('add-record')"
                 class="focus-visible:ring-ring bg-primary text-primary-foreground
                   hover:bg-primary/90 inline-flex h-9 items-center justify-center rounded-md px-4
                   text-sm font-medium whitespace-nowrap shadow transition-colors
@@ -754,7 +751,7 @@ open = false;"
                 >
                   <!-- Delete Button: Absolute Overlay -->
                   <button
-                    @click.stop="deleteRecord(record.id);"
+                    @click.stop="deleteRecord(record.id)"
                     class="text-muted-foreground hover:text-destructive hover:bg-destructive/10
                       absolute top-4 right-4 z-10 rounded-md p-1.5 opacity-0 transition-all
                       group-hover:opacity-100"
@@ -769,13 +766,13 @@ open = false;"
                       <span
                         class="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px]
                           font-semibold transition-colors"
-                        :class="{
-  'border-transparent bg-brand/10 text-brand': ['full', 'maintenance'].includes(record.subType),
-  'border-transparent bg-orange-500/10 text-orange-400': ['partial', 'inspection'].includes(
-    record.subType
-  ),
-  'border-transparent bg-secondary text-secondary-foreground': !record.subType,
-}"
+                        :class="({
+                          'border-transparent bg-brand/10 text-brand': ['full', 'maintenance'].includes(record.subType),
+                          'border-transparent bg-orange-500/10 text-orange-400': ['partial', 'inspection'].includes(
+                            record.subType
+                          ),
+                          'border-transparent bg-secondary text-secondary-foreground': !record.subType,
+                        })"
                         x-text="getSubTypeLabel(record)"
                       >
                       </span>
@@ -853,7 +850,7 @@ open = false;"
       id="fileInput"
       accept=".json"
       class="hidden"
-      @change="handleFileImport($event);"
+      @change="handleFileImport($event)"
     />
 
     <!-- Modals -->
@@ -865,7 +862,7 @@ open = false;"
       <div
         x-show="modal.active"
         x-transition.opacity
-        @click="closeModal();"
+        @click="closeModal()"
         class="bg-background/80 absolute inset-0 backdrop-blur-sm"
       ></div>
       <div
@@ -878,13 +875,13 @@ open = false;"
       >
         <div class="border-border flex shrink-0 items-center justify-between border-b p-6">
           <h3 class="text-lg font-semibold" x-text="getModalTitle()"></h3>
-          <button @click="closeModal();" class="text-muted-foreground hover:text-foreground">
+          <button @click="closeModal()" class="text-muted-foreground hover:text-foreground">
             <i x-lucide="x" class="h-5 w-5"></i>
           </button>
         </div>
         <div class="space-y-4 overflow-y-auto p-6">
           <!-- Add Car Form -->
-          <form x-show="modal.type === 'add-car'" @submit.prevent="submitAddCar;" class="space-y-4">
+          <form x-show="modal.type === 'add-car'" @submit.prevent="submitAddCar" class="space-y-4">
             <div class="grid gap-2">
               <label class="text-sm font-medium">차량 번호</label>
               <input
@@ -974,7 +971,7 @@ open = false;"
           <!-- Add Record Form -->
           <form
             x-show="modal.type === 'add-record'"
-            @submit.prevent="submitAddRecord;"
+            @submit.prevent="submitAddRecord"
             class="space-y-4"
           >
             <div class="grid grid-cols-2 gap-4">
@@ -991,13 +988,13 @@ open = false;"
               </div>
 
               <!-- NEW: Shadcn-like Autocomplete for Place -->
-              <div class="relative grid gap-2" @click.outside="autocomplete.open = false;">
+              <div class="relative grid gap-2" @click.outside="autocomplete.open = false">
                 <label class="text-sm font-medium">장소</label>
                 <input
                   type="text"
                   x-model="forms.record.place"
-                  @focus="autocomplete.open = true;"
-                  @input="autocomplete.open = true;"
+                  @focus="autocomplete.open = true"
+                  @input="autocomplete.open = true"
                   class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
                     bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
                     focus-visible:ring-1 focus-visible:outline-none"
@@ -1013,8 +1010,7 @@ open = false;"
                   <ul class="max-h-[200px] overflow-auto py-1">
                     <template x-for="place in filteredPlaces" :key="place">
                       <li
-                        @click="forms.record.place = place;
-autocomplete.open = false;"
+                        @click="forms.record.place = place; autocomplete.open = false"
                         class="hover:bg-accent hover:text-accent-foreground flex cursor-pointer
                           items-center gap-2 px-3 py-2 text-sm"
                       >
@@ -1043,7 +1039,7 @@ autocomplete.open = false;"
                 <input
                   type="number"
                   x-model="forms.record.amount"
-                  @input="calculateVolume;"
+                  @input="calculateVolume"
                   required
                   class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
                     bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
@@ -1071,7 +1067,7 @@ autocomplete.open = false;"
                   <input
                     type="number"
                     x-model="forms.record.unitPrice"
-                    @input="calculateVolume;"
+                    @input="calculateVolume"
                     class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
                       bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
                       focus-visible:ring-1 focus-visible:outline-none"
@@ -1183,7 +1179,7 @@ autocomplete.open = false;"
           <div x-show="modal.type === 'webdav-config'">
             <div class="flex justify-end pt-4">
               <button
-                @click="connectWebDAVSim();"
+                @click="connectWebDAVSim()"
                 class="bg-primary text-primary-foreground inline-flex h-9 items-center
                   justify-center rounded-md px-4 text-sm font-medium shadow"
               >
@@ -1208,11 +1204,11 @@ autocomplete.open = false;"
           x-transition:enter-end="translate-y-0 opacity-100"
           class="bg-background inline-flex items-center justify-center rounded-md border px-4 py-2.5
             text-sm font-medium shadow-md transition-all"
-          :class="{
-  'border-border text-foreground': toast.type === 'info',
-  'border-green-900 bg-green-950 text-green-100': toast.type === 'success',
-  'border-red-900 bg-red-950 text-red-100': toast.type === 'error',
-}"
+          :class="({
+            'border-border text-foreground': toast.type === 'info',
+            'border-green-900 bg-green-950 text-green-100': toast.type === 'success',
+            'border-red-900 bg-red-950 text-red-100': toast.type === 'error',
+          })"
         >
           <span x-text="toast.message"></span>
         </div>

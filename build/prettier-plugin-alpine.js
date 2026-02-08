@@ -8,7 +8,7 @@ const alpineExpressionAttributeMatch =
 
 const alpineNonExpressionAttributeMatch = /@[\w\d-]+|x-(init|on|effect)([.\w\d\-:])*/;
 
-async function formatAlpineExpression(code, isExpression, options) {
+async function formatAlpineExpression({ code, isExpression, options, attrName, baseIndentSize }) {
   const wrap = isExpression ? `(${code})` : code;
 
   try {
@@ -16,25 +16,33 @@ async function formatAlpineExpression(code, isExpression, options) {
       await prettier.format(wrap, {
         ...options,
         parser: 'typescript',
-        singleQuote: true,
+        semi: true,
       })
     ).trim();
 
-    if (formatted.endsWith(';')) {
-      formatted = formatted.slice(-1).trim();
-    }
-
     if (isExpression) {
-      if (formatted.startsWith(';')) {
-        formatted = formatted.slice(1).trim();
-      }
-
+      formatted = formatted.replace(/^;/, ''); // ASI 방지용 세미콜론 제거
       if (formatted.startsWith('(') && formatted.endsWith(')')) {
         formatted = formatted.slice(1, -1).trim();
       }
     }
 
-    return formatted;
+    if (formatted.endsWith(';')) {
+      formatted = formatted.slice(0, -1).trim();
+    }
+
+    const collapsed = formatted.replace(/\n/g, ' ');
+    const totalLength = baseIndentSize + attrName.length + 3 + collapsed.length;
+
+    if (totalLength <= options.printWidth) {
+      return collapsed;
+    }
+
+    const indentContent = ' '.repeat(baseIndentSize + options.tabWidth);
+    return formatted
+      .split('\n')
+      .map((line, i) => (i === 0 || !line.trim() ? line : `${indentContent}${line}`))
+      .join('\n');
   } catch (e) {
     return code;
   }
@@ -44,27 +52,33 @@ export const parsers = {
   html: {
     ...htmlParser,
 
-    preprocess(text, _options) {
-      return text;
-    },
-
     async parse(text, parsers, options) {
-      const ast = htmlParser.parse(text, parsers, options);
+      const ast = await htmlParser.parse(text, parsers, options);
 
       const walk = async node => {
         if (node.attrs) {
+          const baseIndentSize = node.sourceSpan?.start?.col ?? 0;
+
           for (const attr of node.attrs) {
             const isExpression = alpineExpressionAttributeMatch.test(attr.name);
             const isAction = alpineNonExpressionAttributeMatch.test(attr.name);
 
             if ((isExpression || isAction) && attr.value) {
-              attr.value = await formatAlpineExpression(attr.value, isExpression, options);
+              attr.value = await formatAlpineExpression({
+                code: attr.value,
+                isExpression,
+                options,
+                attrName: attr.name,
+                baseIndentSize,
+              });
             }
           }
         }
 
         if (node.children) {
-          node.children.forEach(walk);
+          for (const child of node.children) {
+            await walk(child);
+          }
         }
       };
 
