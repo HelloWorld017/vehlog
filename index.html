@@ -13,7 +13,7 @@
     />
 
     <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.19/lib/index.min.js"></script>
     <script>
       tailwind.config = {
         darkMode: 'class',
@@ -129,8 +129,8 @@
       }
     </style>
 
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js" defer></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.15.8/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.563.0/dist/umd/lucide.min.js"></script>
   </head>
   <body
     class="bg-background text-foreground selection:bg-brand min-h-screen overflow-x-hidden font-sans
@@ -420,88 +420,91 @@
                   </div>
                 </template>
               </div>
+
               <!-- Info Edit Form -->
-              <form
-                x-show="detail.isEditing"
-                @submit.prevent="saveCarInfo"
-                class="grid grid-cols-1 gap-4 md:grid-cols-2"
-              >
-                <div class="space-y-1.5">
-                  <label class="text-muted-foreground text-xs font-medium">차량번호</label>
-                  <input
-                    type="text"
-                    x-model="detail.editBuffer.number"
-                    class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                      bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
-                      focus-visible:ring-1 focus-visible:outline-none"
-                  />
-                </div>
-                <div class="space-y-1.5">
-                  <label class="text-muted-foreground text-xs font-medium">제조사</label>
-                  <input
-                    type="text"
-                    x-model="detail.editBuffer.maker"
-                    class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                      bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
-                      focus-visible:ring-1 focus-visible:outline-none"
-                  />
-                </div>
-                <div class="space-y-1.5">
-                  <label class="text-muted-foreground text-xs font-medium">차종</label>
-                  <input
-                    type="text"
-                    x-model="detail.editBuffer.model"
-                    class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                      bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
-                      focus-visible:ring-1 focus-visible:outline-none"
-                  />
-                </div>
-                <div class="space-y-1.5">
-                  <label class="text-muted-foreground text-xs font-medium">등급</label>
-                  <input
-                    type="text"
-                    x-model="detail.editBuffer.grade"
-                    class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                      bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
-                      focus-visible:ring-1 focus-visible:outline-none"
-                  />
-                </div>
-                <div class="space-y-1.5">
-                  <label class="text-muted-foreground text-xs font-medium">연식</label>
-                  <input
-                    type="number"
-                    x-model="detail.editBuffer.year"
-                    class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                      bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
-                      focus-visible:ring-1 focus-visible:outline-none"
-                  />
-                </div>
-                <div class="space-y-1.5">
-                  <label class="text-muted-foreground text-xs font-medium">연료</label>
-                  <select
-                    x-model="detail.editBuffer.fuelType"
-                    class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                      bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
-                      focus-visible:ring-1 focus-visible:outline-none"
-                  >
-                    <option>휘발유</option>
-                    <option>경유</option>
-                    <option>LPG</option>
-                    <option>전기</option>
-                    <option>하이브리드</option>
-                  </select>
-                </div>
-                <div class="col-span-full flex justify-end pt-4">
-                  <button
-                    type="submit"
-                    class="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9
-                      items-center justify-center rounded-md px-4 text-sm font-medium shadow
-                      transition-colors"
-                  >
-                    저장
-                  </button>
-                </div>
-              </form>
+              <template x-if="detail.carInfoEditBuffer">
+                <form
+                  x-show="detail.isEditing"
+                  @submit.prevent="saveCarInfo"
+                  class="grid grid-cols-1 gap-4 md:grid-cols-2"
+                >
+                  <div class="space-y-1.5">
+                    <label class="text-muted-foreground text-xs font-medium">차량번호</label>
+                    <input
+                      type="text"
+                      x-model="detail.carInfoEditBuffer.number"
+                      class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
+                        bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
+                        focus-visible:ring-1 focus-visible:outline-none"
+                    />
+                  </div>
+                  <div class="space-y-1.5">
+                    <label class="text-muted-foreground text-xs font-medium">제조사</label>
+                    <input
+                      type="text"
+                      x-model="detail.carInfoEditBuffer.maker"
+                      class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
+                        bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
+                        focus-visible:ring-1 focus-visible:outline-none"
+                    />
+                  </div>
+                  <div class="space-y-1.5">
+                    <label class="text-muted-foreground text-xs font-medium">차종</label>
+                    <input
+                      type="text"
+                      x-model="detail.carInfoEditBuffer.model"
+                      class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
+                        bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
+                        focus-visible:ring-1 focus-visible:outline-none"
+                    />
+                  </div>
+                  <div class="space-y-1.5">
+                    <label class="text-muted-foreground text-xs font-medium">등급</label>
+                    <input
+                      type="text"
+                      x-model="detail.carInfoEditBuffer.grade"
+                      class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
+                        bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
+                        focus-visible:ring-1 focus-visible:outline-none"
+                    />
+                  </div>
+                  <div class="space-y-1.5">
+                    <label class="text-muted-foreground text-xs font-medium">연식</label>
+                    <input
+                      type="number"
+                      x-model="detail.carInfoEditBuffer.year"
+                      class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
+                        bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
+                        focus-visible:ring-1 focus-visible:outline-none"
+                    />
+                  </div>
+                  <div class="space-y-1.5">
+                    <label class="text-muted-foreground text-xs font-medium">연료</label>
+                    <select
+                      x-model="detail.carInfoEditBuffer.fuelType"
+                      class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
+                        bg-transparent px-3 py-1 text-sm shadow-sm transition-colors
+                        focus-visible:ring-1 focus-visible:outline-none"
+                    >
+                      <option>휘발유</option>
+                      <option>경유</option>
+                      <option>LPG</option>
+                      <option>전기</option>
+                      <option>하이브리드</option>
+                    </select>
+                  </div>
+                  <div class="col-span-full flex justify-end pt-4">
+                    <button
+                      type="submit"
+                      class="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9
+                        items-center justify-center rounded-md px-4 text-sm font-medium shadow
+                        transition-colors"
+                    >
+                      저장
+                    </button>
+                  </div>
+                </form>
+              </template>
             </div>
           </div>
 
@@ -511,103 +514,45 @@
             class="animate-in fade-in zoom-in-95 flex flex-1 flex-col overflow-hidden duration-200"
           >
             <!-- Dashboard (Refuel Only) -->
-            <div x-show="detail.tab === 'refuel'" class="mb-6 grid grid-cols-2 gap-4">
+            <div x-show="detail.tab === 'refuel'" class="mb-6 flex gap-4">
               <!-- Card 1: Cost Comparison -->
               <div
-                class="bg-card border-border flex h-64 flex-col justify-between rounded-xl border
-                  p-4"
+                class="bg-card border-border flex h-32 max-w-[300px] flex-1 flex-col justify-between
+                  rounded-xl border p-4"
               >
                 <span class="text-muted-foreground text-xs font-medium">이번 달 주유비</span>
-                <div class="mt-2 flex items-end justify-between">
+                <div class="mt-2 flex flex-col justify-start gap-1">
                   <span
                     class="text-4xl font-bold tracking-tight"
                     x-text="formatNumber(getMonthlyRefuelCost().current)"
-                  >
-                  </span>
+                  ></span>
                   <div
-                    class="mb-1 flex items-center gap-1 text-xs font-medium"
+                    class="mt-2 flex items-center gap-1 text-xs font-medium"
                     :class="getMonthlyRefuelCost().diff > 0 ? 'text-red-400' : 'text-green-400'"
                   >
-                    <span x-text="getMonthlyRefuelCost().diff > 0 ? '+' : ''"></span>
-                    <span x-text="formatNumber(getMonthlyRefuelCost().diff)"></span>
                     <span class="text-muted-foreground">지난달 대비</span>
+                    <span x-text="formatNumber(getMonthlyRefuelCost().diff)"></span>
+                    <span x-text="getMonthlyRefuelCost().diff > 0 ? '\u25b2' : '\u25bc'"></span>
                   </div>
                 </div>
               </div>
 
-              <!-- Card 2: Efficiency Graph (Refined) -->
+              <!-- Card 2: Efficiency Graph -->
               <div
-                x-data="({
-                  hover: false,
-                  hoverX: 0,
-                  hoverIndex: -1,
-                  points: [],
-                  initChart() {
-                    this.$watch('$store.app.detail.tab', () => this.calcPoints());
-                    this.$watch('$store.app.db', () => this.calcPoints());
-                    this.calcPoints();
-                  },
-                  calcPoints() {
-                    const history = $store.app.getEfficiencyHistory();
-                    if (history.length < 2) {
-                      this.points = [];
-                      return;
-                    }
-                    const maxVal = Math.max(...history.map(p => p.val));
-                    const minVal = Math.min(...history.map(p => p.val));
-                    const range = maxVal - minVal || 1;
-                    // Padding: top 20%, bottom 20%
-                    const yBase = 80;
-                    const yScale = 60 / range;
-
-                    this.points = history.map((pt, i) => ({
-                      x: (i / (history.length - 1)) * 100,
-                      y: 80 - (pt.val - minVal) * yScale,
-                      val: pt.val,
-                      date: pt.date,
-                    }));
-                  },
-                  getPath() {
-                    if (this.points.length < 2) return '';
-                    return this.points.map((p, i) => (i === 0 ? 'M' : 'L') + `${p.x},${p.y}`).join(' ');
-                  },
-                  getAreaPath() {
-                    if (this.points.length < 2) return '';
-                    const path = this.getPath();
-                    return `${path} L 100,100 L 0,100 Z`;
-                  },
-                  handleMouseMove(e) {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const x = ((e.clientX - rect.left) / rect.width) * 100;
-                    // Find closest point
-                    let minDist = 1000;
-                    this.points.forEach((p, i) => {
-                      const dist = Math.abs(p.x - x);
-                      if (dist < minDist) {
-                        minDist = dist;
-                        this.hoverIndex = i;
-                      }
-                    });
-                    this.hoverX = this.points[this.hoverIndex].x;
-                    this.hover = true;
-                  },
-                })"
+                x-data="chart()"
                 x-init="initChart()"
                 @mousemove="handleMouseMove"
                 @mouseleave="hover = false"
-                class="bg-card border-border group relative flex h-64 flex-col overflow-hidden
-                  rounded-xl border p-4 select-none"
+                class="bg-card border-border group relative flex h-32 max-w-[400px] flex-1 flex-col
+                  overflow-hidden rounded-xl border p-4 select-none"
               >
-                <div
-                  class="pointer-events-none relative z-20 mb-4 flex items-start justify-between"
-                >
+                <div class="pointer-events-none relative z-20 mb-4">
                   <span class="text-muted-foreground text-xs font-medium"
                     >최근 연비 추이 (km/L)</span
                   >
-                  <!-- Tooltip Value Display -->
-                  <div x-show="hover && hoverIndex > -1" class="text-right">
+                  <div x-show="hover && hoverIndex > -1" class="absolute top-0 right-0 text-right">
                     <div
-                      class="text-brand text-2xl font-bold tabular-nums"
+                      class="text-foreground text-2xl font-bold tabular-nums"
                       x-text="points[hoverIndex]?.val"
                     ></div>
                     <div
@@ -617,7 +562,7 @@
                   </div>
                 </div>
 
-                <div class="relative z-10 w-full flex-1">
+                <div class="relative z-10 min-h-0 w-full flex-1">
                   <template x-if="points.length > 1">
                     <svg
                       class="h-full w-full overflow-visible"
@@ -656,15 +601,6 @@
                           stroke-width="1"
                           stroke-dasharray="2 2"
                           opacity="0.5"
-                          vector-effect="non-scaling-stroke"
-                        />
-                        <circle
-                          :cx="points[hoverIndex]?.x"
-                          :cy="points[hoverIndex]?.y"
-                          r="3"
-                          fill="white"
-                          stroke="#6366f1"
-                          stroke-width="2"
                           vector-effect="non-scaling-stroke"
                         />
                       </g>
@@ -749,17 +685,17 @@
                   class="group bg-card border-border hover:bg-accent/50 relative rounded-lg border
                     p-4 transition-colors"
                 >
-                  <!-- Delete Button: Absolute Overlay -->
+                  <!-- Delete Button -->
                   <button
                     @click.stop="deleteRecord(record.id)"
-                    class="text-muted-foreground hover:text-destructive hover:bg-destructive/10
-                      absolute top-4 right-4 z-10 rounded-md p-1.5 opacity-0 transition-all
+                    class="text-muted-foreground bg-popover hover:text-destructive hover:bg-accent
+                      absolute top-2 right-2 z-10 rounded-md p-1.5 opacity-0 transition-all
                       group-hover:opacity-100"
                   >
                     <i x-lucide="trash-2" class="h-4 w-4"></i>
                   </button>
 
-                  <div class="mb-2 flex items-start justify-between pr-8">
+                  <div class="mb-2 flex items-start justify-between">
                     <div class="flex items-center gap-2">
                       <span class="text-muted-foreground font-mono text-xs" x-text="record.date">
                       </span>
@@ -785,22 +721,25 @@
                   </div>
 
                   <div class="flex items-end justify-between text-sm">
-                    <div class="flex flex-col gap-0.5">
+                    <div class="flex flex-col gap-1">
                       <span
-                        class="max-w-[200px] truncate font-medium"
+                        class="max-w-[200px] truncate text-[16px] font-bold"
                         x-text="getRecordLabel(record)"
                       >
                       </span>
-                      <span class="text-muted-foreground flex items-center gap-1 text-xs">
-                        <i x-lucide="map-pin" class="h-3 w-3"></i>
-                        <span x-text="record.place || '장소 미지정'"></span>
-                      </span>
+                      <div class="flex items-center gap-0.5">
+                        <div
+                          class="text-muted-foreground text-xs tabular-nums"
+                          x-text="formatDistance(record.odometer)"
+                        ></div>
+                        <span class="text-border mx-1">|</span>
+                        <span class="text-muted-foreground flex items-center gap-1 text-xs">
+                          <i x-lucide="map-pin" class="h-3 w-3"></i>
+                          <span x-text="record.place || '장소 미지정'"></span>
+                        </span>
+                      </div>
                     </div>
                     <div class="flex flex-col items-end gap-0.5 text-right">
-                      <div
-                        class="text-muted-foreground text-xs tabular-nums"
-                        x-text="formatDistance(record.odometer)"
-                      ></div>
                       <template x-if="detail.tab === 'refuel' && record.volume">
                         <div class="flex flex-col items-end">
                           <div class="text-muted-foreground text-[10px]">
@@ -987,7 +926,7 @@
                 />
               </div>
 
-              <!-- NEW: Shadcn-like Autocomplete for Place -->
+              <!-- Autocomplete for Place -->
               <div class="relative grid gap-2" @click.outside="autocomplete.open = false">
                 <label class="text-sm font-medium">장소</label>
                 <input
@@ -1522,17 +1461,18 @@
             if (this.detail.isEditing) {
               this.detail.isEditing = false;
             } else {
-              this.detail.editBuffer = { ...this.activeCar };
+              this.detail.carInfoEditBuffer = { ...this.activeCar };
               this.detail.isEditing = true;
             }
           },
+
           saveCarInfo() {
             const idx = this.db.cars.findIndex(c => c.id === this.detail.carId);
             if (idx > -1) {
               this.db.cars[idx] = {
                 ...this.db.cars[idx],
-                ...this.detail.editBuffer,
-                year: Number(this.detail.editBuffer.year),
+                ...this.detail.carInfoEditBuffer,
+                year: Number(this.detail.carInfoEditBuffer.year),
               };
               this.autoSave();
               this.detail.isEditing = false;
@@ -1658,6 +1598,69 @@
           closeDatabase() {
             this.db = null;
             this.router.current = 'onboarding';
+          },
+        }));
+
+        Alpine.data('chart', () => ({
+          hover: false,
+          hoverX: 0,
+          hoverIndex: -1,
+          points: [],
+
+          initChart() {
+            this.$watch('$store.app.detail.tab', () => this.calcPoints());
+            this.$watch('$store.app.db', () => this.calcPoints());
+            this.calcPoints();
+          },
+
+          calcPoints() {
+            const history = this.$store.app.getEfficiencyHistory();
+            if (history.length < 2) {
+              this.points = [];
+              return;
+            }
+            const maxVal = Math.max(...history.map(p => p.val));
+            const minVal = Math.min(...history.map(p => p.val));
+            const range = maxVal - minVal || 1;
+            // Padding: top 20%, bottom 20%
+            const yBase = 80;
+            const yScale = 60 / range;
+
+            this.points = history.map((pt, i) => ({
+              x: (i / (history.length - 1)) * 100,
+              y: 80 - (pt.val - minVal) * yScale,
+              val: pt.val,
+              date: pt.date,
+            }));
+          },
+
+          getPath() {
+            if (this.points.length < 2) return '';
+            return this.points.map((p, i) => (i === 0 ? 'M' : 'L') + `${p.x},${p.y}`).join(' ');
+          },
+
+          getAreaPath() {
+            if (this.points.length < 2) return '';
+            const path = this.getPath();
+            return `${path} L 100,100 L 0,100 Z`;
+          },
+
+          handleMouseMove(e) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = ((e.clientX - rect.left) / rect.width) * 100;
+
+            // Find closest point
+            let minDist = 1000;
+            this.points.forEach((p, i) => {
+              const dist = Math.abs(p.x - x);
+              if (dist < minDist) {
+                minDist = dist;
+                this.hoverIndex = i;
+              }
+            });
+
+            this.hoverX = this.points[this.hoverIndex].x;
+            this.hover = true;
           },
         }));
       });

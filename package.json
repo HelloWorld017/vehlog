@@ -4,7 +4,7 @@
   "description": "Simple car log manager",
   "main": "index.html",
   "scripts": {
-    "lint": "prettier --write ."
+    "lint": "prettier --write index.html"
   },
   "keywords": [],
   "type": "module",
