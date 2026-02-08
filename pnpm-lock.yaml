@@ -5,6 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 importers:
+
   .:
     devDependencies:
       prettier:
@@ -13,9 +14,6 @@ importers:
       prettier-plugin-classnames:
         specifier: ^0.9.0
         version: 0.9.0(prettier@3.8.1)
-      prettier-plugin-django-alpine:
-        specifier: ^1.3.0
-        version: 1.3.0
       prettier-plugin-merge:
         specifier: ^0.9.0
         version: 0.9.0(prettier@3.8.1)
@@ -24,19 +22,14 @@ importers:
         version: 0.7.2(prettier@3.8.1)
 
 packages:
+
   diff@5.1.0:
-    resolution:
-      {
-        integrity: sha512-D+mk+qE8VC/PAUrlAU34N+VfXev0ghe5ywmpqrawphmVZc1bEfn56uo9qpyGp1p4xpzOHkSW4ztBd6L7Xx4ACw==,
-      }
-    engines: { node: '>=0.3.1' }
+    resolution: {integrity: sha512-D+mk+qE8VC/PAUrlAU34N+VfXev0ghe5ywmpqrawphmVZc1bEfn56uo9qpyGp1p4xpzOHkSW4ztBd6L7Xx4ACw==}
+    engines: {node: '>=0.3.1'}
 
   prettier-plugin-classnames@0.9.0:
-    resolution:
-      {
-        integrity: sha512-xTTKf/us7YMcY4tuoQq0/WaFJzc/ZA0pPpWGphV1noLHX19mIMAJgqmy6ByX6ksVPtmcPDuAF36XVGr3DZYh4g==,
-      }
-    engines: { node: '>=18' }
+    resolution: {integrity: sha512-xTTKf/us7YMcY4tuoQq0/WaFJzc/ZA0pPpWGphV1noLHX19mIMAJgqmy6ByX6ksVPtmcPDuAF36XVGr3DZYh4g==}
+    engines: {node: '>=18'}
     peerDependencies:
       '@prettier/plugin-oxc': '*'
       prettier: ^3
@@ -50,27 +43,15 @@ packages:
       prettier-plugin-svelte:
         optional: true
 
-  prettier-plugin-django-alpine@1.3.0:
-    resolution:
-      {
-        integrity: sha512-SiretF4/gPe4L2sNoZq7yrCjBb+ZT1siEKBMinUVXBk/YB50aovDtMn5IDLw9VQGPYYsyQx70l3DBch3BPIVQA==,
-      }
-
   prettier-plugin-merge@0.9.0:
-    resolution:
-      {
-        integrity: sha512-bWd9Gw05GC55wOiDL52CNM0GlvEww10oc+VhptbMhz091SrlM/F9M86WZ94VWnv732rUlu9i9FzZ4wWFzTYZsw==,
-      }
-    engines: { node: '>=18' }
+    resolution: {integrity: sha512-bWd9Gw05GC55wOiDL52CNM0GlvEww10oc+VhptbMhz091SrlM/F9M86WZ94VWnv732rUlu9i9FzZ4wWFzTYZsw==}
+    engines: {node: '>=18'}
     peerDependencies:
       prettier: ^3
 
   prettier-plugin-tailwindcss@0.7.2:
-    resolution:
-      {
-        integrity: sha512-LkphyK3Fw+q2HdMOoiEHWf93fNtYJwfamoKPl7UwtjFQdei/iIBoX11G6j706FzN3ymX9mPVi97qIY8328vdnA==,
-      }
-    engines: { node: '>=20.19' }
+    resolution: {integrity: sha512-LkphyK3Fw+q2HdMOoiEHWf93fNtYJwfamoKPl7UwtjFQdei/iIBoX11G6j706FzN3ymX9mPVi97qIY8328vdnA==}
+    engines: {node: '>=20.19'}
     peerDependencies:
       '@ianvs/prettier-plugin-sort-imports': '*'
       '@prettier/plugin-hermes': '*'
@@ -124,28 +105,21 @@ packages:
         optional: true
 
   prettier@3.8.1:
-    resolution:
-      {
-        integrity: sha512-UOnG6LftzbdaHZcKoPFtOcCKztrQ57WkHDeRD9t/PTQtmT0NHSeWWepj6pS0z/N7+08BHFDQVUrfmfMRcZwbMg==,
-      }
-    engines: { node: '>=14' }
+    resolution: {integrity: sha512-UOnG6LftzbdaHZcKoPFtOcCKztrQ57WkHDeRD9t/PTQtmT0NHSeWWepj6pS0z/N7+08BHFDQVUrfmfMRcZwbMg==}
+    engines: {node: '>=14'}
     hasBin: true
 
   zod@3.22.4:
-    resolution:
-      {
-        integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==,
-      }
+    resolution: {integrity: sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==}
 
 snapshots:
+
   diff@5.1.0: {}
 
   prettier-plugin-classnames@0.9.0(prettier@3.8.1):
     dependencies:
       prettier: 3.8.1
       zod: 3.22.4
-
-  prettier-plugin-django-alpine@1.3.0: {}
 
   prettier-plugin-merge@0.9.0(prettier@3.8.1):
     dependencies:
