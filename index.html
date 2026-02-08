@@ -521,14 +521,14 @@
                   <span class="text-muted-foreground text-xs font-medium"
                     >최근 연비 추이 (km/L)</span
                   >
-                  <div x-show="hover && hoverIndex > -1" class="absolute top-0 right-0 text-right">
+                  <div x-show="points.length > 0" class="absolute top-0 right-0 text-right">
                     <div
                       class="text-foreground text-2xl font-bold tabular-nums"
-                      x-text="points[hoverIndex]?.val"
+                      x-text="points.at(hover ? hoverIndex : -1)?.val"
                     ></div>
                     <div
                       class="text-muted-foreground text-[10px]"
-                      x-text="points[hoverIndex]?.date"
+                      x-text="points.at(hover ? hoverIndex : -1)?.date"
                     ></div>
                   </div>
                 </div>
@@ -1516,7 +1516,7 @@
           },
 
           getRecordLabel(r) {
-            return r.volume ? `${r.volume}L 주유` : r.item || r.title || '내역 없음';
+            return r.volume ? `${r.volume}L` : r.item || r.title || '내역 없음';
           },
 
           formatDistance(k) {
