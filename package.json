@@ -4,6 +4,7 @@
   "description": "Simple car log manager",
   "main": "index.html",
   "scripts": {
+    "dev": "serve -p 5174",
     "lint": "prettier --write index.html"
   },
   "keywords": [],
@@ -15,6 +16,7 @@
     "prettier": "^3.8.1",
     "prettier-plugin-classnames": "^0.9.0",
     "prettier-plugin-merge": "^0.9.0",
-    "prettier-plugin-tailwindcss": "^0.7.2"
+    "prettier-plugin-tailwindcss": "^0.7.2",
+    "serve": "^14.2.5"
   }
 }

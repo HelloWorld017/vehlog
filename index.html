@@ -245,7 +245,7 @@
               x-text="isStartingDb ? '여는 중...' : '시작하기'"
             ></h3>
             <p class="text-muted-foreground text-sm">
-              ClxDB 연결을 시작하고 저장소 선택 및 잠금 해제를 진행합니다.
+              데이터베이스 연결을 시작하고 저장소 선택 및 잠금 해제를 진행합니다.
             </p>
           </button>
         </div>
@@ -1579,10 +1579,6 @@
 
             this.isStartingDb = true;
             try {
-              if (!window.clxdb?.startClxDBWithUI) {
-                throw new Error('ClxDB 라이브러리를 불러오지 못했습니다.');
-              }
-
               this.disconnectClient();
 
               const client = await clxdb.startClxDBWithUI({
