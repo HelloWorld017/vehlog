@@ -47,7 +47,8 @@
         --radius-md: calc(var(--radius) - 2px);
         --radius-sm: calc(var(--radius) - 4px);
 
-        --font-sans: "Pretendard", "-apple-system", "BlinkMacSystemFont", "system-ui", "Roboto", "sans-serif";
+        --font-sans:
+          'Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'Roboto', 'sans-serif';
       }
     </style>
     <style>
@@ -100,6 +101,8 @@
       }
     </style>
 
+    <script src="https://cdn.jsdelivr.net/npm/dexie@4.2.1/dist/dexie.min.js"></script>
+    <script src="https://unpkg.com/clxdb@0.4.0/dist/clxdb.umd.cjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.15.8/dist/cdn.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/lucide@0.563.0/dist/umd/lucide.min.js"></script>
   </head>
@@ -223,34 +226,27 @@
           안전하게 내 차의 모든 기록을 관리하세요.<br />데이터는 브라우저에 저장되거나 클라우드와
           연동됩니다.
         </p>
-        <div class="grid w-full max-w-2xl gap-4 md:grid-cols-2">
+        <div class="w-full max-w-xl">
           <button
-            @click="createLocalDatabase()"
-            class="group border-border bg-card hover:bg-accent relative overflow-hidden rounded-xl
-              border p-6 text-left transition-all duration-300"
+            @click="startDatabase()"
+            :disabled="isStartingDb"
+            class="group border-border bg-card hover:bg-accent relative w-full overflow-hidden
+              rounded-xl border p-6 text-left transition-all duration-300
+              disabled:pointer-events-none disabled:opacity-70"
           >
             <div
               class="bg-secondary mb-4 flex h-10 w-10 items-center justify-center rounded-full
                 transition-transform group-hover:scale-110"
             >
-              <i x-lucide="plus" class="h-5 w-5"></i>
+              <i x-lucide="database" class="h-5 w-5"></i>
             </div>
-            <h3 class="mb-1 text-lg font-semibold">새 데이터베이스 만들기</h3>
-            <p class="text-muted-foreground text-sm">로컬 저장소에 새로운 차계부를 생성합니다.</p>
-          </button>
-          <button
-            @click="openModal('webdav-config')"
-            class="group border-border bg-card hover:bg-accent rounded-xl border p-6 text-left
-              transition-all duration-300"
-          >
-            <div
-              class="bg-secondary mb-4 flex h-10 w-10 items-center justify-center rounded-full
-                transition-transform group-hover:scale-110"
-            >
-              <i x-lucide="globe" class="h-5 w-5"></i>
-            </div>
-            <h3 class="mb-1 text-lg font-semibold">WebDAV 연결하기</h3>
-            <p class="text-muted-foreground text-sm">기존 데이터를 불러옵니다.</p>
+            <h3
+              class="mb-1 text-lg font-semibold"
+              x-text="isStartingDb ? '여는 중...' : '시작하기'"
+            ></h3>
+            <p class="text-muted-foreground text-sm">
+              ClxDB 연결을 시작하고 저장소 선택 및 잠금 해제를 진행합니다.
+            </p>
           </button>
         </div>
       </main>
@@ -1084,19 +1080,6 @@
               </button>
             </div>
           </form>
-
-          <!-- WebDAV -->
-          <div x-show="modal.type === 'webdav-config'">
-            <div class="flex justify-end pt-4">
-              <button
-                @click="connectWebDAVSim()"
-                class="bg-primary text-primary-foreground inline-flex h-9 items-center
-                  justify-center rounded-md px-4 text-sm font-medium shadow"
-              >
-                연결
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -1126,22 +1109,251 @@
     </div>
 
     <script>
-      const Backend = {
-        DB_KEY: 'vehlog_db',
-        load() {
-          const r = localStorage.getItem(this.DB_KEY);
-          return r ? JSON.parse(r) : null;
-        },
-        save(d) {
-          localStorage.setItem(this.DB_KEY, JSON.stringify(d));
-          return true;
-        },
-        initNew() {
-          const d = { config: { type: 'local' }, cars: [], records: [] };
-          this.save(d);
-          return d;
-        },
-      };
+      const createEmptyDatabase = () => ({ config: { type: 'clxdb' }, cars: [], records: [] });
+
+      class DexieClxBackend {
+        constructor() {
+          this.uuid = null;
+          this.dexie = null;
+          this.listeners = new Set();
+        }
+
+        isReady() {
+          return this.dexie !== null;
+        }
+
+        close() {
+          if (this.dexie) {
+            this.dexie.close();
+            this.dexie = null;
+          }
+          this.uuid = null;
+          this.listeners.clear();
+        }
+
+        getTable() {
+          if (!this.dexie) {
+            throw new Error('Local Dexie database is not initialized.');
+          }
+          return this.dexie.table('documents');
+        }
+
+        isEntityDocumentId(id) {
+          return id.startsWith('car:') || id.startsWith('record:');
+        }
+
+        getDocumentKind(id) {
+          if (id.startsWith('car:')) return 'car';
+          if (id.startsWith('record:')) return 'record';
+          return 'meta';
+        }
+
+        withLocalIndexes(document) {
+          const kind = this.getDocumentKind(document.id);
+          return {
+            id: document.id,
+            at: document.at,
+            seq: document.seq,
+            del: document.del,
+            data: document.data,
+            kind,
+            carId:
+              kind === 'record'
+                ? (document.data?.carId ?? null)
+                : kind === 'car'
+                  ? document.id.slice(4)
+                  : null,
+          };
+        }
+
+        toDatabaseDocument(row) {
+          return {
+            id: row.id,
+            at: row.at,
+            seq: row.seq,
+            del: row.del,
+            data: row.data,
+          };
+        }
+
+        notifyReplicate() {
+          for (const onUpdate of this.listeners) {
+            try {
+              onUpdate();
+            } catch (error) {
+              console.error(error);
+            }
+          }
+        }
+
+        async initialize(uuid) {
+          if (this.dexie && this.uuid === uuid) {
+            return;
+          }
+
+          if (this.dexie) {
+            this.dexie.close();
+          }
+
+          this.uuid = uuid;
+          this.dexie = new Dexie(`vehlog_clxdb_${uuid}`);
+          this.dexie.version(1).stores({
+            documents: '&id, seq, del, at, kind, carId',
+          });
+          await this.dexie.open();
+        }
+
+        async read(ids) {
+          const rows = await this.getTable().bulkGet(ids);
+          return rows.map(row => (row ? this.toDatabaseDocument(row) : null));
+        }
+
+        async readPendingIds() {
+          const rows = await this.getTable().where('seq').equals(null).toArray();
+          return rows.map(row => row.id);
+        }
+
+        async upsert(data) {
+          if (!data.length) return;
+
+          await this.getTable().bulkPut(
+            data.map(document =>
+              this.withLocalIndexes({
+                id: document.id,
+                at: document.at,
+                seq: document.seq,
+                del: document.del,
+                data: document.data,
+              })
+            )
+          );
+        }
+
+        async delete(data) {
+          if (!data.length) return;
+          await this.getTable().bulkDelete(data.map(document => document.id));
+        }
+
+        replicate(onUpdate) {
+          this.listeners.add(onUpdate);
+          return () => this.listeners.delete(onUpdate);
+        }
+
+        async stageUpsertDocument(id, data) {
+          await this.getTable().put(
+            this.withLocalIndexes({
+              id,
+              at: Date.now(),
+              seq: null,
+              del: false,
+              data,
+            })
+          );
+          this.notifyReplicate();
+        }
+
+        async stageDeleteDocument(id) {
+          const existing = await this.getTable().get(id);
+          await this.getTable().put(
+            this.withLocalIndexes({
+              id,
+              at: Math.max(Date.now(), (existing?.at ?? 0) + 1),
+              seq: null,
+              del: true,
+              data: undefined,
+            })
+          );
+          this.notifyReplicate();
+        }
+
+        async loadSnapshot() {
+          const snapshot = createEmptyDatabase();
+          const rows = await this.getTable().toArray();
+
+          for (const row of rows) {
+            if (row.del || !row.data || !this.isEntityDocumentId(row.id)) {
+              continue;
+            }
+
+            if (row.id.startsWith('car:')) {
+              const car = { ...row.data };
+              if (!car.id) car.id = row.id.slice(4);
+              snapshot.cars.push(car);
+              continue;
+            }
+
+            const record = { ...row.data };
+            if (!record.id) record.id = row.id.slice(7);
+            snapshot.records.push(record);
+          }
+
+          return snapshot;
+        }
+
+        async importSnapshot(rawSnapshot) {
+          const snapshot = rawSnapshot || {};
+          const cars = Array.isArray(snapshot.cars) ? snapshot.cars : [];
+          const records = Array.isArray(snapshot.records) ? snapshot.records : [];
+          const table = this.getTable();
+          const desiredDocuments = [];
+          const desiredIds = new Set();
+          let at = Date.now();
+
+          for (const rawCar of cars) {
+            const id = String(rawCar?.id || crypto.randomUUID());
+            const car = { ...(rawCar || {}), id };
+            desiredIds.add(`car:${id}`);
+            desiredDocuments.push(
+              this.withLocalIndexes({
+                id: `car:${id}`,
+                at: ++at,
+                seq: null,
+                del: false,
+                data: car,
+              })
+            );
+          }
+
+          for (const rawRecord of records) {
+            const id = String(rawRecord?.id || crypto.randomUUID());
+            const record = { ...(rawRecord || {}), id };
+            desiredIds.add(`record:${id}`);
+            desiredDocuments.push(
+              this.withLocalIndexes({
+                id: `record:${id}`,
+                at: ++at,
+                seq: null,
+                del: false,
+                data: record,
+              })
+            );
+          }
+
+          const rows = await table.toArray();
+          const tombstones = rows
+            .filter(row => this.isEntityDocumentId(row.id) && !desiredIds.has(row.id))
+            .map(row =>
+              this.withLocalIndexes({
+                id: row.id,
+                at: ++at,
+                seq: null,
+                del: true,
+                data: undefined,
+              })
+            );
+
+          await this.dexie.transaction('rw', this.dexie.documents, async () => {
+            if (desiredDocuments.length) {
+              await table.bulkPut(desiredDocuments);
+            }
+            if (tombstones.length) {
+              await table.bulkPut(tombstones);
+            }
+          });
+
+          this.notifyReplicate();
+        }
+      }
 
       document.addEventListener('alpine:init', () => {
         Alpine.directive('lucide', (el, { expression }, { evaluate }) => {
@@ -1229,13 +1441,13 @@
           autocomplete: { open: false },
           filters: { dateStart: '', dateEnd: '', type: 'all', search: '' },
           toasts: [],
+          backend: new DexieClxBackend(),
+          clxClient: null,
+          clxDocumentsChangedUnsubscribe: null,
+          isStartingDb: false,
 
           init() {
-            const d = Backend.load();
-            if (d) {
-              this.db = d;
-              this.router.current = 'car-list';
-            }
+            this.db = null;
           },
 
           get activeCar() {
@@ -1299,7 +1511,11 @@
           getMonthlyRefuelCost() {
             if (!this.db || !this.detail.carId) return { current: 0, diff: 0 };
             const currentDate = new Date();
-            const lastMonthDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+            const lastMonthDate = new Date(
+              currentDate.getFullYear(),
+              currentDate.getMonth() - 1,
+              1
+            );
 
             const records = this.db.records.filter(
               r => r.carId === this.detail.carId && r.type === 'refuel'
@@ -1308,16 +1524,20 @@
             const curTotal = records
               .filter(r => {
                 const date = new Date(r.date);
-                return date.getFullYear() === currentDate.getFullYear()
-                  && date.getMonth() === currentDate.getMonth();
+                return (
+                  date.getFullYear() === currentDate.getFullYear() &&
+                  date.getMonth() === currentDate.getMonth()
+                );
               })
               .reduce((acc, r) => acc + r.amount, 0);
 
             const lastTotal = records
               .filter(r => {
                 const date = new Date(r.date);
-                return date.getFullYear() === lastMonthDate.getFullYear()
-                  && date.getMonth() === lastMonthDate.getMonth();
+                return (
+                  date.getFullYear() === lastMonthDate.getFullYear() &&
+                  date.getMonth() === lastMonthDate.getMonth()
+                );
               })
               .reduce((acc, r) => acc + r.amount, 0);
 
@@ -1328,9 +1548,66 @@
             return Alpine.store('app').getEfficiencyHistory();
           },
 
-          createLocalDatabase() {
-            this.db = Backend.initNew();
-            this.router.current = 'car-list';
+          async reloadSnapshot() {
+            if (!this.backend.isReady()) {
+              this.db = null;
+              return;
+            }
+
+            this.db = await this.backend.loadSnapshot();
+          },
+
+          async triggerSync() {
+            if (!this.clxClient) return;
+            try {
+              await this.clxClient.sync();
+            } catch (error) {
+              console.error(error);
+            }
+          },
+
+          disconnectClient() {
+            this.clxDocumentsChangedUnsubscribe?.();
+            this.clxDocumentsChangedUnsubscribe = null;
+            this.clxClient?.destroy();
+            this.clxClient = null;
+            this.backend.close();
+          },
+
+          async startDatabase() {
+            if (this.isStartingDb) return;
+
+            this.isStartingDb = true;
+            try {
+              if (!window.clxdb?.startClxDBWithUI) {
+                throw new Error('ClxDB 라이브러리를 불러오지 못했습니다.');
+              }
+
+              this.disconnectClient();
+
+              const client = await clxdb.startClxDBWithUI({
+                database: this.backend,
+                ui: { syncIndicator: true },
+              });
+
+              if (!client) {
+                return;
+              }
+
+              this.clxClient = client;
+              this.clxDocumentsChangedUnsubscribe = client.on('documentsChanged', async () => {
+                await this.reloadSnapshot();
+              });
+
+              await this.reloadSnapshot();
+              this.router.current = 'car-list';
+              this.showToast('데이터베이스 연결됨', 'success');
+            } catch (error) {
+              console.error(error);
+              this.showToast('데이터베이스 연결 실패', 'error');
+            } finally {
+              this.isStartingDb = false;
+            }
           },
 
           openModal(t) {
@@ -1376,20 +1653,25 @@
             setTimeout(() => (this.modal.type = null), 200);
           },
 
-          submitAddCar() {
+          async submitAddCar() {
+            if (!this.backend.isReady()) return;
+
             const c = {
               id: crypto.randomUUID(),
               ...this.forms.car,
               totalDistance: Number(this.forms.car.totalDistance) || 0,
               createdAt: new Date().toISOString(),
             };
-            this.db.cars.push(c);
-            this.autoSave();
+            await this.backend.stageUpsertDocument(`car:${c.id}`, c);
+            await this.reloadSnapshot();
+            void this.triggerSync();
             this.closeModal();
             this.showToast('차량 추가됨', 'success');
           },
 
-          submitAddRecord() {
+          async submitAddRecord() {
+            if (!this.backend.isReady()) return;
+
             const r = this.forms.record;
             const rec = {
               id: crypto.randomUUID(),
@@ -1408,22 +1690,29 @@
               createdAt: new Date().toISOString(),
             };
 
-            this.db.records.push(rec);
+            await this.backend.stageUpsertDocument(`record:${rec.id}`, rec);
 
-            const car = this.db.cars.find(c => c.id === this.detail.carId);
+            const car = this.activeCar;
             if (car && rec.odometer > car.totalDistance) {
-              car.totalDistance = rec.odometer;
+              await this.backend.stageUpsertDocument(`car:${car.id}`, {
+                ...car,
+                totalDistance: rec.odometer,
+              });
             }
 
-            this.autoSave();
+            await this.reloadSnapshot();
+            void this.triggerSync();
             this.closeModal();
             this.showToast('기록 추가됨', 'success');
           },
 
-          deleteRecord(id) {
+          async deleteRecord(id) {
+            if (!this.backend.isReady()) return;
+
             if (confirm('정말로 이 기록을 삭제하시겠습니까?')) {
-              this.db.records = this.db.records.filter(r => r.id !== id);
-              this.autoSave();
+              await this.backend.stageDeleteDocument(`record:${id}`);
+              await this.reloadSnapshot();
+              void this.triggerSync();
               this.showToast('기록이 삭제되었습니다.', 'success');
             }
           },
@@ -1443,22 +1732,19 @@
             }
           },
 
-          saveCarInfo() {
-            const idx = this.db.cars.findIndex(c => c.id === this.detail.carId);
-            if (idx > -1) {
-              this.db.cars[idx] = {
-                ...this.db.cars[idx],
-                ...this.detail.carInfoEditBuffer,
-                year: Number(this.detail.carInfoEditBuffer.year),
-              };
-              this.autoSave();
-              this.detail.isEditing = false;
-              this.showToast('정보 저장됨', 'success');
-            }
-          },
+          async saveCarInfo() {
+            if (!this.backend.isReady() || !this.activeCar) return;
 
-          autoSave() {
-            if (this.db) Backend.save(this.db);
+            await this.backend.stageUpsertDocument(`car:${this.detail.carId}`, {
+              ...this.activeCar,
+              ...this.detail.carInfoEditBuffer,
+              year: Number(this.detail.carInfoEditBuffer.year),
+            });
+
+            await this.reloadSnapshot();
+            void this.triggerSync();
+            this.detail.isEditing = false;
+            this.showToast('정보 저장됨', 'success');
           },
 
           calculateVolume() {
@@ -1552,10 +1838,16 @@
             const f = e.target.files[0];
             if (!f) return;
             const r = new FileReader();
-            r.onload = ev => {
+            r.onload = async ev => {
               try {
-                this.db = JSON.parse(ev.target.result);
-                Backend.save(this.db);
+                if (!this.backend.isReady()) {
+                  this.showToast('먼저 데이터베이스를 시작하세요.', 'error');
+                  return;
+                }
+
+                await this.backend.importSnapshot(JSON.parse(ev.target.result));
+                await this.reloadSnapshot();
+                void this.triggerSync();
                 this.router.current = 'car-list';
                 this.showToast('복원됨', 'success');
               } catch (e) {
@@ -1566,14 +1858,10 @@
             e.target.value = '';
           },
 
-          connectWebDAVSim() {
-            this.closeModal();
-            this.db = Backend.initNew();
-            this.router.current = 'car-list';
-          },
-
           closeDatabase() {
+            this.disconnectClient();
             this.db = null;
+            this.detail = { tab: 'info' };
             this.router.current = 'onboarding';
           },
         }));
