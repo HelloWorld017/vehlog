@@ -329,7 +329,7 @@
         <div class="border-border mb-6 flex w-full items-center border-b">
           <template x-for="tab in ['info', 'refuel', 'maintenance', 'etc']">
             <button
-              @click="detail.tab = tab"
+              @click="switchTab(tab)"
               class="hover:text-foreground relative px-4 py-2.5 text-sm font-medium
                 transition-colors"
               :class="detail.tab === tab ? 'text-brand' : 'text-muted-foreground'"
@@ -596,6 +596,7 @@
                 <input
                   type="text"
                   x-model="filters.search"
+                  @input.debounce.300ms="handleFiltersChanged()"
                   placeholder="검색..."
                   class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
                     bg-transparent py-1 pr-3 pl-9 text-sm shadow-xs transition-colors
@@ -609,6 +610,7 @@
                   <input
                     type="date"
                     x-model="filters.dateStart"
+                    @change="handleFiltersChanged()"
                     class="text-foreground h-full w-[90px] border-none bg-transparent p-0 text-xs
                       outline-none focus:ring-0"
                   />
@@ -616,6 +618,7 @@
                   <input
                     type="date"
                     x-model="filters.dateEnd"
+                    @change="handleFiltersChanged()"
                     class="text-foreground h-full w-[90px] border-none bg-transparent p-0 text-xs
                       outline-none focus:ring-0"
                   />
@@ -623,6 +626,7 @@
                 <div x-show="detail.tab === 'maintenance'" class="relative">
                   <select
                     x-model="filters.type"
+                    @change="handleFiltersChanged()"
                     class="border-input focus-visible:ring-ring flex h-9 w-[80px] rounded-md border
                       bg-transparent px-2 py-1 text-xs shadow-xs transition-colors
                       focus-visible:ring-1 focus-visible:outline-none"
@@ -734,7 +738,12 @@
                   </div>
                 </div>
               </template>
-              <template x-if="filteredRecords.length === 0">
+              <template x-if="recordPage.loading">
+                <div class="py-12 text-center">
+                  <p class="text-muted-foreground text-sm">불러오는 중...</p>
+                </div>
+              </template>
+              <template x-if="!recordPage.loading && filteredRecords.length === 0">
                 <div class="py-12 text-center">
                   <div
                     class="bg-secondary mb-4 inline-flex h-12 w-12 items-center justify-center
@@ -745,6 +754,30 @@
                   <p class="text-muted-foreground text-sm">내역이 없습니다.</p>
                 </div>
               </template>
+            </div>
+            <div
+              x-show="filteredRecords.length > 0 || recordPage.hasPrev || recordPage.hasNext"
+              class="border-border mt-3 flex items-center justify-between border-t pt-3"
+            >
+              <button
+                @click="goToPrevRecordsPage()"
+                :disabled="!recordPage.hasPrev || recordPage.loading"
+                class="border-border hover:bg-accent inline-flex h-8 items-center justify-center
+                  rounded-md border px-3 text-xs transition-colors disabled:pointer-events-none
+                  disabled:opacity-40"
+              >
+                이전
+              </button>
+              <span class="text-muted-foreground text-xs" x-text="getRecordsPageLabel()"></span>
+              <button
+                @click="goToNextRecordsPage()"
+                :disabled="!recordPage.hasNext || recordPage.loading"
+                class="border-border hover:bg-accent inline-flex h-8 items-center justify-center
+                  rounded-md border px-3 text-xs transition-colors disabled:pointer-events-none
+                  disabled:opacity-40"
+              >
+                다음
+              </button>
             </div>
           </div>
         </div>
@@ -1148,8 +1181,79 @@
           return 'meta';
         }
 
+        getCarIdFromRecordData(data) {
+          const carId = data?.carId;
+          return carId ? String(carId) : null;
+        }
+
+        isPlaceCounterDocumentId(id) {
+          return id.startsWith('meta:places:');
+        }
+
+        normalizePlaceId(place) {
+          return String(place || '')
+            .trim()
+            .toLowerCase();
+        }
+
+        toDayStartTimestamp(dateText) {
+          const text = String(dateText || '').trim();
+          if (!text) return null;
+
+          const timestamp = Date.parse(`${text}T00:00:00`);
+          return Number.isFinite(timestamp) ? timestamp : null;
+        }
+
+        toDayEndTimestamp(dateText) {
+          const text = String(dateText || '').trim();
+          if (!text) return null;
+
+          const timestamp = Date.parse(`${text}T23:59:59.999`);
+          return Number.isFinite(timestamp) ? timestamp : null;
+        }
+
+        toRecordTimestamp(data) {
+          const explicitTimestamp = Number(data?.dateTs);
+          if (Number.isFinite(explicitTimestamp)) {
+            return explicitTimestamp;
+          }
+
+          if (typeof data?.date === 'number' && Number.isFinite(data.date)) {
+            return data.date;
+          }
+
+          const rawDate = String(data?.date || '').trim();
+          if (!rawDate) return 0;
+
+          if (/^\d+$/.test(rawDate)) {
+            const parsedTimestamp = Number(rawDate);
+            if (Number.isFinite(parsedTimestamp)) {
+              return parsedTimestamp;
+            }
+          }
+
+          const timestamp = Date.parse(rawDate.length <= 10 ? `${rawDate}T00:00:00` : rawDate);
+          return Number.isFinite(timestamp) ? timestamp : 0;
+        }
+
+        formatDateFromTimestamp(timestamp) {
+          const normalizedTimestamp = Number(timestamp);
+          if (!Number.isFinite(normalizedTimestamp)) return '';
+
+          const date = new Date(normalizedTimestamp);
+          if (Number.isNaN(date.getTime())) return '';
+
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        }
+
         withLocalIndexes(document) {
           const kind = this.getDocumentKind(document.id);
+          const isRecord = kind === 'record';
+          const recordDateTs = isRecord ? this.toRecordTimestamp(document.data) : null;
+
           return {
             id: document.id,
             at: document.at,
@@ -1157,12 +1261,16 @@
             del: document.del,
             data: document.data,
             kind,
-            carId:
-              kind === 'record'
-                ? (document.data?.carId ?? null)
-                : kind === 'car'
-                  ? document.id.slice(4)
-                  : null,
+            carId: isRecord
+              ? this.getCarIdFromRecordData(document.data)
+              : kind === 'car'
+                ? document.id.slice(4)
+                : null,
+            recordType: isRecord ? String(document.data?.type || '') : null,
+            recordDateTs: isRecord ? recordDateTs : null,
+            recordOdometer: isRecord ? Number(document.data?.odometer) || 0 : null,
+            recordSubType: isRecord ? String(document.data?.subType || '') : null,
+            placeId: isRecord ? this.normalizePlaceId(document.data?.place) || null : null,
           };
         }
 
@@ -1174,6 +1282,291 @@
             del: row.del,
             data: row.data,
           };
+        }
+
+        toCarEntity(row) {
+          const car = { ...(row.data || {}) };
+          if (!car.id) car.id = row.id.slice(4);
+          return car;
+        }
+
+        toRecordEntity(row) {
+          const record = { ...(row.data || {}) };
+          if (!record.id) record.id = row.id.slice(7);
+          if (!record.carId && row.carId) {
+            record.carId = row.carId;
+          }
+          if (!record.date && Number.isFinite(row.recordDateTs)) {
+            record.date = this.formatDateFromTimestamp(row.recordDateTs);
+          }
+          return record;
+        }
+
+        getRecordIndexName() {
+          return '[kind+carId+recordType+recordDateTs+recordOdometer+id]';
+        }
+
+        buildRecordCursorFromRow(row) {
+          return {
+            dateTs: Number(row.recordDateTs) || 0,
+            odometer: Number(row.recordOdometer) || 0,
+            id: String(row.id || ''),
+          };
+        }
+
+        normalizeRecordCursor(cursor) {
+          if (!cursor || typeof cursor !== 'object') return null;
+
+          return {
+            dateTs: Number(cursor.dateTs) || 0,
+            odometer: Number(cursor.odometer) || 0,
+            id: String(cursor.id || ''),
+          };
+        }
+
+        recordMatchesSearch(row, normalizedSearch) {
+          if (!normalizedSearch) return true;
+
+          const record = row.data || {};
+          const haystack =
+            `${record.item || ''}${record.place || ''}${record.memo || ''}`.toLowerCase();
+          return haystack.includes(normalizedSearch);
+        }
+
+        recordMatchesMaintenanceType(row, tab, maintenanceType) {
+          if (tab !== 'maintenance') return true;
+          if (!maintenanceType || maintenanceType === 'all') return true;
+
+          return String(row.recordSubType || row.data?.subType || '') === maintenanceType;
+        }
+
+        getRecordRangeLowerKey(carId, tab, dateStartTs) {
+          return [
+            'record',
+            String(carId),
+            String(tab),
+            Number.isFinite(dateStartTs) ? dateStartTs : Dexie.minKey,
+            Dexie.minKey,
+            Dexie.minKey,
+          ];
+        }
+
+        getRecordRangeUpperKey(carId, tab, dateEndTs, cursor) {
+          if (cursor) {
+            return [
+              'record',
+              String(carId),
+              String(tab),
+              Number(cursor.dateTs) || 0,
+              Number(cursor.odometer) || 0,
+              String(cursor.id || ''),
+            ];
+          }
+
+          return [
+            'record',
+            String(carId),
+            String(tab),
+            Number.isFinite(dateEndTs) ? dateEndTs : Dexie.maxKey,
+            Dexie.maxKey,
+            Dexie.maxKey,
+          ];
+        }
+
+        async readRecordRowsChunk({
+          carId,
+          tab,
+          cursor = null,
+          dateStartTs = null,
+          dateEndTs = null,
+          limit = 80,
+        }) {
+          if (!carId || !tab) return [];
+
+          const normalizedCursor = this.normalizeRecordCursor(cursor);
+          const lowerKey = this.getRecordRangeLowerKey(carId, tab, dateStartTs);
+          const upperKey = this.getRecordRangeUpperKey(carId, tab, dateEndTs, normalizedCursor);
+
+          return this.getTable()
+            .where(this.getRecordIndexName())
+            .between(lowerKey, upperKey, true, !normalizedCursor)
+            .reverse()
+            .limit(Math.max(1, Number(limit) || 1))
+            .toArray();
+        }
+
+        getPlaceCounterDocumentId(carId) {
+          return `meta:places:${carId}`;
+        }
+
+        placeCounterMapFromEntries(entries = []) {
+          const counter = new Map();
+
+          for (const entry of entries) {
+            const placeId = this.normalizePlaceId(entry?.id || entry?.name || '');
+            if (!placeId) continue;
+
+            const occurrence = Math.max(0, Number(entry?.occurrence) || 0);
+            if (occurrence <= 0) continue;
+
+            const existing = counter.get(placeId);
+            if (existing) {
+              existing.occurrence += occurrence;
+              if (!existing.name && entry?.name) {
+                existing.name = String(entry.name).trim();
+              }
+              continue;
+            }
+
+            const name = String(entry?.name || '').trim();
+            counter.set(placeId, {
+              id: placeId,
+              name: name || placeId,
+              occurrence,
+            });
+          }
+
+          return counter;
+        }
+
+        placeCounterEntriesFromMap(counter) {
+          return Array.from(counter.values())
+            .filter(entry => entry.occurrence > 0)
+            .sort((a, b) => {
+              if (b.occurrence !== a.occurrence) return b.occurrence - a.occurrence;
+              return a.name.localeCompare(b.name);
+            });
+        }
+
+        adjustPlaceCounterMap(counter, placeName, delta) {
+          const normalizedName = String(placeName || '').trim();
+          const placeId = this.normalizePlaceId(normalizedName);
+          if (!placeId || !delta) return false;
+
+          const existing = counter.get(placeId);
+          if (!existing) {
+            if (delta <= 0) return false;
+            counter.set(placeId, {
+              id: placeId,
+              name: normalizedName || placeId,
+              occurrence: delta,
+            });
+            return true;
+          }
+
+          existing.occurrence += delta;
+          if (normalizedName) {
+            existing.name = normalizedName;
+          }
+
+          if (existing.occurrence <= 0) {
+            counter.delete(placeId);
+          }
+
+          return true;
+        }
+
+        async applyPlaceCounterDelta(carId, previousPlace, nextPlace, atHint = Date.now()) {
+          const normalizedCarId = String(carId || '');
+          if (!normalizedCarId) return;
+
+          const previousName = String(previousPlace || '').trim();
+          const nextName = String(nextPlace || '').trim();
+          const previousId = this.normalizePlaceId(previousName);
+          const nextId = this.normalizePlaceId(nextName);
+
+          if (!previousId && !nextId) return;
+
+          const table = this.getTable();
+          const documentId = this.getPlaceCounterDocumentId(normalizedCarId);
+          const existing = await table.get(documentId);
+          if (!existing) {
+            const fallbackEntries = await this.readPlaceCounterFallback(normalizedCarId);
+            if (!fallbackEntries.length) return;
+
+            await table.put(
+              this.withLocalIndexes({
+                id: documentId,
+                at: Math.max(Number(atHint) || Date.now(), Date.now()),
+                seq: null,
+                del: false,
+                data: {
+                  carId: normalizedCarId,
+                  places: fallbackEntries,
+                },
+              })
+            );
+            return;
+          }
+
+          const counter = this.placeCounterMapFromEntries(existing?.data?.places || []);
+
+          let changed = false;
+
+          if (previousId && previousId !== nextId) {
+            changed = this.adjustPlaceCounterMap(counter, previousName, -1) || changed;
+          }
+
+          if (nextId && nextId !== previousId) {
+            changed = this.adjustPlaceCounterMap(counter, nextName, 1) || changed;
+          }
+
+          if (previousId && nextId && previousId === nextId && nextName) {
+            const entry = counter.get(nextId);
+            if (entry && entry.name !== nextName) {
+              entry.name = nextName;
+              changed = true;
+            }
+          }
+
+          if (!changed) return;
+
+          const at = Math.max(Number(atHint) || Date.now(), (existing?.at ?? 0) + 1);
+          if (!counter.size) {
+            if (!existing) return;
+
+            await table.put(
+              this.withLocalIndexes({
+                id: documentId,
+                at,
+                seq: null,
+                del: true,
+                data: undefined,
+              })
+            );
+            return;
+          }
+
+          await table.put(
+            this.withLocalIndexes({
+              id: documentId,
+              at,
+              seq: null,
+              del: false,
+              data: {
+                carId: normalizedCarId,
+                places: this.placeCounterEntriesFromMap(counter),
+              },
+            })
+          );
+        }
+
+        async readPlaceCounterFallback(carId) {
+          const normalizedCarId = String(carId || '');
+          if (!normalizedCarId) return [];
+
+          const rows = await this.getTable()
+            .where('[kind+carId]')
+            .equals(['record', normalizedCarId])
+            .toArray();
+          const counter = new Map();
+
+          for (const row of rows) {
+            if (row.del || !row.data) continue;
+            this.adjustPlaceCounterMap(counter, row.data.place, 1);
+          }
+
+          return this.placeCounterEntriesFromMap(counter);
         }
 
         notifyReplicate() {
@@ -1197,8 +1590,9 @@
 
           this.uuid = uuid;
           this.dexie = new Dexie(`vehlog_clxdb_${uuid}`);
-          this.dexie.version(1).stores({
-            documents: '&id, seq, del, at, kind, carId',
+          this.dexie.version(2).stores({
+            documents:
+              '&id, seq, del, at, kind, carId, [kind+carId], [kind+carId+recordType+recordDateTs+recordOdometer+id], [kind+carId+recordType+placeId]',
           });
           await this.dexie.open();
         }
@@ -1209,8 +1603,8 @@
         }
 
         async readPendingIds() {
-          const rows = await this.getTable().where('seq').equals(null).toArray();
-          return rows.map(row => row.id);
+          const ids = await this.getTable().where('seq').equals(null).primaryKeys();
+          return ids.map(id => String(id));
         }
 
         async upsert(data) {
@@ -1231,7 +1625,255 @@
 
         async delete(data) {
           if (!data.length) return;
+
           await this.getTable().bulkDelete(data.map(document => document.id));
+        }
+
+        async readCars() {
+          const rows = await this.getTable().where('kind').equals('car').toArray();
+          const cars = rows.filter(row => !row.del && row.data).map(row => this.toCarEntity(row));
+
+          cars.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+          return cars;
+        }
+
+        async readRecordsPage({ carId, tab, filters = {}, cursor = null, limit = 20 }) {
+          if (!carId || !tab) {
+            return {
+              items: [],
+              cursor: null,
+              nextCursor: null,
+              hasNext: false,
+            };
+          }
+
+          const normalizedTab = String(tab);
+          const normalizedCursor = this.normalizeRecordCursor(cursor);
+          const normalizedSearch = String(filters.search || '')
+            .trim()
+            .toLowerCase();
+          const maintenanceType = String(filters.maintenanceType || 'all');
+          const dateStartTs = this.toDayStartTimestamp(filters.dateStart);
+          const dateEndTs = this.toDayEndTimestamp(filters.dateEnd);
+
+          if (
+            Number.isFinite(dateStartTs) &&
+            Number.isFinite(dateEndTs) &&
+            Number(dateStartTs) > Number(dateEndTs)
+          ) {
+            return {
+              items: [],
+              cursor: normalizedCursor,
+              nextCursor: null,
+              hasNext: false,
+            };
+          }
+
+          const pageSize = Math.max(1, Math.min(100, Number(limit) || 20));
+          const chunkSize = Math.max(pageSize * 3, 80);
+          const acceptedRows = [];
+
+          let scanCursor = normalizedCursor;
+          let exhausted = false;
+          let safetyCount = 0;
+
+          while (acceptedRows.length < pageSize + 1 && !exhausted && safetyCount < 300) {
+            safetyCount += 1;
+
+            const rows = await this.readRecordRowsChunk({
+              carId,
+              tab: normalizedTab,
+              cursor: scanCursor,
+              dateStartTs,
+              dateEndTs,
+              limit: chunkSize,
+            });
+
+            if (!rows.length) {
+              exhausted = true;
+              break;
+            }
+
+            for (const row of rows) {
+              if (row.del || !row.data) continue;
+              if (!this.recordMatchesMaintenanceType(row, normalizedTab, maintenanceType)) continue;
+              if (!this.recordMatchesSearch(row, normalizedSearch)) continue;
+
+              acceptedRows.push(row);
+              if (acceptedRows.length >= pageSize + 1) {
+                break;
+              }
+            }
+
+            if (rows.length < chunkSize) {
+              exhausted = true;
+              break;
+            }
+
+            scanCursor = this.buildRecordCursorFromRow(rows[rows.length - 1]);
+          }
+
+          const pageRows = acceptedRows.slice(0, pageSize);
+          const hasNext = acceptedRows.length > pageSize || (!exhausted && safetyCount >= 300);
+
+          return {
+            items: pageRows.map(row => this.toRecordEntity(row)),
+            cursor: normalizedCursor,
+            nextCursor:
+              hasNext && pageRows.length
+                ? this.buildRecordCursorFromRow(pageRows[pageRows.length - 1])
+                : null,
+            hasNext,
+          };
+        }
+
+        async readPlaceCounter(carId) {
+          if (!carId) return [];
+
+          const row = await this.getTable().get(this.getPlaceCounterDocumentId(carId));
+          if (row && !row.del && row.data) {
+            return this.placeCounterEntriesFromMap(
+              this.placeCounterMapFromEntries(row.data.places || [])
+            );
+          }
+
+          return this.readPlaceCounterFallback(carId);
+        }
+
+        async readRecordCarIds(documentIds) {
+          if (!documentIds?.length) return {};
+
+          const rows = await this.getTable().bulkGet(documentIds);
+          const carIdsByDocumentId = {};
+
+          for (let i = 0; i < documentIds.length; i++) {
+            const row = rows[i];
+            if (row?.kind !== 'record') continue;
+
+            const carId = this.getCarIdFromRecordData(row.data);
+            if (carId) {
+              carIdsByDocumentId[documentIds[i]] = carId;
+            }
+          }
+
+          return carIdsByDocumentId;
+        }
+
+        async readMonthlyRefuelCost(carId) {
+          if (!carId) return { current: 0, diff: 0 };
+
+          const now = new Date();
+          const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+          const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1).getTime();
+          const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime();
+
+          let currentTotal = 0;
+          let lastTotal = 0;
+
+          let cursor = null;
+          const chunkSize = 200;
+
+          while (true) {
+            const rows = await this.readRecordRowsChunk({
+              carId,
+              tab: 'refuel',
+              cursor,
+              dateStartTs: previousMonthStart,
+              dateEndTs: nextMonthStart - 1,
+              limit: chunkSize,
+            });
+
+            if (!rows.length) {
+              break;
+            }
+
+            for (const row of rows) {
+              if (row.del || !row.data) continue;
+
+              const timestamp = Number(row.recordDateTs);
+              if (!Number.isFinite(timestamp)) continue;
+
+              const amount = Number(row.data.amount) || 0;
+              if (timestamp >= currentMonthStart && timestamp < nextMonthStart) {
+                currentTotal += amount;
+                continue;
+              }
+
+              if (timestamp >= previousMonthStart && timestamp < currentMonthStart) {
+                lastTotal += amount;
+              }
+            }
+
+            if (rows.length < chunkSize) {
+              break;
+            }
+
+            cursor = this.buildRecordCursorFromRow(rows[rows.length - 1]);
+          }
+
+          return { current: currentTotal, diff: currentTotal - lastTotal };
+        }
+
+        async readEfficiencyHistory(carId, limit = 20) {
+          if (!carId) return [];
+
+          const historyLimit = Math.max(1, Math.min(50, Number(limit) || 20));
+          const recentRefuels = [];
+
+          let cursor = null;
+          const chunkSize = Math.max(60, historyLimit * 3);
+          let safetyCount = 0;
+
+          while (recentRefuels.length < historyLimit + 1 && safetyCount < 300) {
+            safetyCount += 1;
+
+            const rows = await this.readRecordRowsChunk({
+              carId,
+              tab: 'refuel',
+              cursor,
+              limit: chunkSize,
+            });
+
+            if (!rows.length) {
+              break;
+            }
+
+            for (const row of rows) {
+              if (row.del || !row.data) continue;
+
+              const volume = Number(row.data.volume) || 0;
+              if (volume <= 0) continue;
+
+              recentRefuels.push(this.toRecordEntity(row));
+              if (recentRefuels.length >= historyLimit + 1) {
+                break;
+              }
+            }
+
+            if (rows.length < chunkSize) {
+              break;
+            }
+
+            cursor = this.buildRecordCursorFromRow(rows[rows.length - 1]);
+          }
+
+          const history = [];
+
+          for (let i = 0; i < Math.min(recentRefuels.length - 1, historyLimit); i++) {
+            const record = recentRefuels[i];
+            const prevRecord = recentRefuels[i + 1];
+            const distance = (Number(record.odometer) || 0) - (Number(prevRecord.odometer) || 0);
+            const volume = Number(record.volume) || 0;
+
+            if (distance <= 0 || volume <= 0) continue;
+
+            history.push({
+              date: String(record.date || '').substring(5),
+              val: parseFloat((distance / volume).toFixed(1)),
+            });
+          }
+
+          return history.reverse();
         }
 
         replicate(onUpdate) {
@@ -1240,51 +1882,97 @@
         }
 
         async stageUpsertDocument(id, data) {
-          await this.getTable().put(
+          const table = this.getTable();
+          const existing = id.startsWith('record:') ? await table.get(id) : null;
+          const now = Date.now();
+
+          await table.put(
             this.withLocalIndexes({
               id,
-              at: Date.now(),
+              at: now,
               seq: null,
               del: false,
               data,
             })
           );
+
+          if (id.startsWith('record:')) {
+            const previousData = existing?.del ? undefined : existing?.data;
+            const previousCarId = this.getCarIdFromRecordData(previousData);
+            const currentCarId = this.getCarIdFromRecordData(data);
+
+            if (previousCarId && previousCarId !== currentCarId) {
+              await this.applyPlaceCounterDelta(previousCarId, previousData?.place, null, now + 1);
+            }
+
+            if (currentCarId) {
+              await this.applyPlaceCounterDelta(
+                currentCarId,
+                previousCarId === currentCarId ? previousData?.place : null,
+                data?.place,
+                now + 2
+              );
+            }
+          }
+
           this.notifyReplicate();
         }
 
         async stageDeleteDocument(id) {
-          const existing = await this.getTable().get(id);
-          await this.getTable().put(
+          const table = this.getTable();
+          const existing = await table.get(id);
+          const tombstoneAt = Math.max(Date.now(), (existing?.at ?? 0) + 1);
+
+          await table.put(
             this.withLocalIndexes({
               id,
-              at: Math.max(Date.now(), (existing?.at ?? 0) + 1),
+              at: tombstoneAt,
               seq: null,
               del: true,
               data: undefined,
             })
           );
+
+          if (id.startsWith('record:')) {
+            const existingCarId = this.getCarIdFromRecordData(existing?.data);
+            if (existingCarId) {
+              await this.applyPlaceCounterDelta(
+                existingCarId,
+                existing?.data?.place,
+                null,
+                tombstoneAt + 1
+              );
+            }
+          } else if (id.startsWith('car:')) {
+            await table.put(
+              this.withLocalIndexes({
+                id: this.getPlaceCounterDocumentId(id.slice(4)),
+                at: tombstoneAt + 1,
+                seq: null,
+                del: true,
+                data: undefined,
+              })
+            );
+          }
+
           this.notifyReplicate();
         }
 
         async loadSnapshot() {
           const snapshot = createEmptyDatabase();
-          const rows = await this.getTable().toArray();
+          const [carRows, recordRows] = await Promise.all([
+            this.getTable().where('kind').equals('car').toArray(),
+            this.getTable().where('kind').equals('record').toArray(),
+          ]);
 
-          for (const row of rows) {
-            if (row.del || !row.data || !this.isEntityDocumentId(row.id)) {
-              continue;
-            }
+          for (const row of carRows) {
+            if (row.del || !row.data) continue;
+            snapshot.cars.push(this.toCarEntity(row));
+          }
 
-            if (row.id.startsWith('car:')) {
-              const car = { ...row.data };
-              if (!car.id) car.id = row.id.slice(4);
-              snapshot.cars.push(car);
-              continue;
-            }
-
-            const record = { ...row.data };
-            if (!record.id) record.id = row.id.slice(7);
-            snapshot.records.push(record);
+          for (const row of recordRows) {
+            if (row.del || !row.data) continue;
+            snapshot.records.push(this.toRecordEntity(row));
           }
 
           return snapshot;
@@ -1297,6 +1985,7 @@
           const table = this.getTable();
           const desiredDocuments = [];
           const desiredIds = new Set();
+          const placeCountersByCar = new Map();
           let at = Date.now();
 
           for (const rawCar of cars) {
@@ -1318,6 +2007,16 @@
             const id = String(rawRecord?.id || crypto.randomUUID());
             const record = { ...(rawRecord || {}), id };
             desiredIds.add(`record:${id}`);
+
+            const carId = this.getCarIdFromRecordData(record);
+            const placeName = String(record.place || '').trim();
+            if (carId && placeName) {
+              if (!placeCountersByCar.has(carId)) {
+                placeCountersByCar.set(carId, new Map());
+              }
+              this.adjustPlaceCounterMap(placeCountersByCar.get(carId), placeName, 1);
+            }
+
             desiredDocuments.push(
               this.withLocalIndexes({
                 id: `record:${id}`,
@@ -1329,9 +2028,30 @@
             );
           }
 
+          for (const [carId, counter] of placeCountersByCar.entries()) {
+            const places = this.placeCounterEntriesFromMap(counter);
+            if (!places.length) continue;
+
+            const id = this.getPlaceCounterDocumentId(carId);
+            desiredIds.add(id);
+            desiredDocuments.push(
+              this.withLocalIndexes({
+                id,
+                at: ++at,
+                seq: null,
+                del: false,
+                data: { carId, places },
+              })
+            );
+          }
+
           const rows = await table.toArray();
           const tombstones = rows
-            .filter(row => this.isEntityDocumentId(row.id) && !desiredIds.has(row.id))
+            .filter(
+              row =>
+                (this.isEntityDocumentId(row.id) || this.isPlaceCounterDocumentId(row.id)) &&
+                !desiredIds.has(row.id)
+            )
             .map(row =>
               this.withLocalIndexes({
                 id: row.id,
@@ -1379,31 +2099,9 @@
         Alpine.store('app', {
           db: null,
           detail: { tab: 'info' },
+          refuelHistory: [],
           getEfficiencyHistory() {
-            if (!this.db || !this.detail.carId) return [];
-            const detail = this.detail;
-
-            let records = this.db.records.filter(
-              x => x.carId === detail.carId && x.type === 'refuel'
-            );
-
-            records.sort((a, b) => b.odometer - a.odometer);
-
-            const history = [];
-            for (let i = 0; i < Math.min(records.length - 1, 20); i++) {
-              const rec = records[i];
-              const prev = records[i + 1];
-              if (rec.volume && prev) {
-                const dist = rec.odometer - prev.odometer;
-                if (dist > 0) {
-                  history.push({
-                    date: rec.date.substring(5),
-                    val: parseFloat((dist / rec.volume).toFixed(1)),
-                  });
-                }
-              }
-            }
-            return history.reverse();
+            return this.refuelHistory;
           },
         });
 
@@ -1440,14 +2138,36 @@
 
           autocomplete: { open: false },
           filters: { dateStart: '', dateEnd: '', type: 'all', search: '' },
+          recordPage: {
+            items: [],
+            cursor: null,
+            nextCursor: null,
+            hasPrev: false,
+            hasNext: false,
+            page: 1,
+            limit: 20,
+            loading: false,
+          },
+          recordPageCursors: [null],
+          recordPageCursorIndex: 0,
+          placeCounter: [],
+          refuelStats: { monthly: { current: 0, diff: 0 }, history: [] },
           toasts: [],
           backend: new DexieClxBackend(),
           clxClient: null,
           clxDocumentsChangedUnsubscribe: null,
+          clxSyncCompleteUnsubscribe: null,
+          remoteChanges: {
+            carsChanged: false,
+            changedRecordCarIds: new Set(),
+            unknownRecordChanges: false,
+          },
+          remoteChangesDrain: Promise.resolve(),
           isStartingDb: false,
 
           init() {
             this.db = null;
+            Alpine.store('app').refuelHistory = [];
           },
 
           get activeCar() {
@@ -1455,44 +2175,162 @@
           },
 
           get filteredRecords() {
-            if (!this.db || !this.detail.carId) return [];
-
-            let r = this.db.records.filter(
-              x => x.carId === this.detail.carId && x.type === this.detail.tab
-            );
-
-            r.sort((a, b) => {
-              if (b.date !== a.date) return new Date(b.date) - new Date(a.date);
-              return b.odometer - a.odometer;
-            });
-
-            if (this.filters.dateStart) {
-              r = r.filter(x => x.date >= this.filters.dateStart);
-            }
-
-            if (this.filters.dateEnd) {
-              r = r.filter(x => x.date <= this.filters.dateEnd);
-            }
-
-            if (this.detail.tab === 'maintenance' && this.filters.type !== 'all') {
-              r = r.filter(x => x.subType === this.filters.type);
-            }
-
-            if (this.filters.search) {
-              const q = this.filters.search.toLowerCase();
-              r = r.filter(x => (x.item + x.place + x.memo).toLowerCase().includes(q));
-            }
-
-            return r;
+            return this.recordPage.items;
           },
 
           get placeSuggestions() {
-            return [...new Set(this.db?.records.map(r => r.place).filter(Boolean))];
+            return this.placeCounter.map(place => place.name);
           },
 
           get filteredPlaces() {
             const q = (this.forms.record.place || '').toLowerCase();
             return this.placeSuggestions.filter(p => p.toLowerCase().includes(q));
+          },
+
+          isRecordTab(tab = this.detail.tab) {
+            return ['refuel', 'maintenance', 'etc'].includes(tab);
+          },
+
+          buildRecordFilters() {
+            return {
+              dateStart: this.filters.dateStart,
+              dateEnd: this.filters.dateEnd,
+              maintenanceType: this.filters.type,
+              search: this.filters.search,
+            };
+          },
+
+          resetRecordPageState() {
+            this.recordPageCursors = [null];
+            this.recordPageCursorIndex = 0;
+            this.recordPage = {
+              ...this.recordPage,
+              items: [],
+              cursor: null,
+              nextCursor: null,
+              hasPrev: false,
+              hasNext: false,
+              page: 1,
+              loading: false,
+            };
+          },
+
+          getRecordsPageLabel() {
+            if (
+              !this.filteredRecords.length &&
+              !this.recordPage.hasPrev &&
+              !this.recordPage.hasNext
+            ) {
+              return '0 페이지';
+            }
+
+            return `${this.recordPage.page} 페이지`;
+          },
+
+          getCurrentRecordCursor() {
+            return this.recordPageCursors[this.recordPageCursorIndex] ?? null;
+          },
+
+          async loadRecordsPage(cursor = null) {
+            if (!this.backend.isReady() || !this.detail.carId || !this.isRecordTab()) {
+              this.resetRecordPageState();
+              return;
+            }
+
+            this.recordPage.loading = true;
+            try {
+              const page = await this.backend.readRecordsPage({
+                carId: this.detail.carId,
+                tab: this.detail.tab,
+                filters: this.buildRecordFilters(),
+                cursor,
+                limit: this.recordPage.limit,
+              });
+
+              this.recordPage = {
+                ...this.recordPage,
+                ...page,
+                hasPrev: this.recordPageCursorIndex > 0,
+                page: this.recordPageCursorIndex + 1,
+                loading: false,
+              };
+            } catch (error) {
+              console.error(error);
+              this.recordPage.loading = false;
+            }
+          },
+
+          async goToPrevRecordsPage() {
+            if (!this.recordPage.hasPrev) return;
+
+            this.recordPageCursorIndex = Math.max(0, this.recordPageCursorIndex - 1);
+            await this.loadRecordsPage(this.getCurrentRecordCursor());
+          },
+
+          async goToNextRecordsPage() {
+            if (!this.recordPage.hasNext || this.recordPage.nextCursor === null) return;
+
+            this.recordPageCursors = this.recordPageCursors.slice(
+              0,
+              this.recordPageCursorIndex + 1
+            );
+            this.recordPageCursors.push(this.recordPage.nextCursor);
+            this.recordPageCursorIndex += 1;
+            await this.loadRecordsPage(this.recordPage.nextCursor);
+          },
+
+          async handleFiltersChanged() {
+            if (!this.isRecordTab() || !this.detail.carId) return;
+
+            this.recordPageCursors = [null];
+            this.recordPageCursorIndex = 0;
+            await this.loadRecordsPage(null);
+          },
+
+          async refreshPlaceCounter() {
+            if (!this.backend.isReady() || !this.detail.carId) {
+              this.placeCounter = [];
+              return;
+            }
+
+            this.placeCounter = await this.backend.readPlaceCounter(this.detail.carId);
+          },
+
+          async refreshRefuelStats() {
+            if (!this.backend.isReady() || !this.detail.carId) {
+              this.refuelStats = { monthly: { current: 0, diff: 0 }, history: [] };
+              Alpine.store('app').refuelHistory = [];
+              return;
+            }
+
+            const [monthly, history] = await Promise.all([
+              this.backend.readMonthlyRefuelCost(this.detail.carId),
+              this.backend.readEfficiencyHistory(this.detail.carId, 20),
+            ]);
+
+            this.refuelStats = { monthly, history };
+            Alpine.store('app').refuelHistory = history;
+          },
+
+          async refreshActiveCarData({ resetPage = true } = {}) {
+            if (!this.backend.isReady() || !this.detail.carId) {
+              this.resetRecordPageState();
+              this.placeCounter = [];
+              this.refuelStats = { monthly: { current: 0, diff: 0 }, history: [] };
+              Alpine.store('app').refuelHistory = [];
+              return;
+            }
+
+            await Promise.all([this.refreshPlaceCounter(), this.refreshRefuelStats()]);
+
+            if (this.isRecordTab()) {
+              if (resetPage) {
+                this.recordPageCursors = [null];
+                this.recordPageCursorIndex = 0;
+              }
+
+              await this.loadRecordsPage(this.getCurrentRecordCursor());
+            }
           },
 
           getEfficiency(record, index) {
@@ -1509,52 +2347,121 @@
           },
 
           getMonthlyRefuelCost() {
-            if (!this.db || !this.detail.carId) return { current: 0, diff: 0 };
-            const currentDate = new Date();
-            const lastMonthDate = new Date(
-              currentDate.getFullYear(),
-              currentDate.getMonth() - 1,
-              1
-            );
-
-            const records = this.db.records.filter(
-              r => r.carId === this.detail.carId && r.type === 'refuel'
-            );
-
-            const curTotal = records
-              .filter(r => {
-                const date = new Date(r.date);
-                return (
-                  date.getFullYear() === currentDate.getFullYear() &&
-                  date.getMonth() === currentDate.getMonth()
-                );
-              })
-              .reduce((acc, r) => acc + r.amount, 0);
-
-            const lastTotal = records
-              .filter(r => {
-                const date = new Date(r.date);
-                return (
-                  date.getFullYear() === lastMonthDate.getFullYear() &&
-                  date.getMonth() === lastMonthDate.getMonth()
-                );
-              })
-              .reduce((acc, r) => acc + r.amount, 0);
-
-            return { current: curTotal, diff: curTotal - lastTotal };
+            return this.refuelStats.monthly;
           },
 
           getEfficiencyHistory() {
             return Alpine.store('app').getEfficiencyHistory();
           },
 
-          async reloadSnapshot() {
+          async reloadCars() {
             if (!this.backend.isReady()) {
               this.db = null;
               return;
             }
 
-            this.db = await this.backend.loadSnapshot();
+            const cars = await this.backend.readCars();
+            this.db = { config: { type: 'clxdb' }, cars, records: [] };
+
+            if (this.detail.carId && !cars.some(car => car.id === this.detail.carId)) {
+              this.detail = { tab: 'info' };
+              this.resetRecordPageState();
+              this.placeCounter = [];
+              this.refuelStats = { monthly: { current: 0, diff: 0 }, history: [] };
+              Alpine.store('app').refuelHistory = [];
+              if (this.router.current === 'car-detail') {
+                this.router.current = 'car-list';
+              }
+            }
+          },
+
+          resetRemoteChanges() {
+            this.remoteChanges.carsChanged = false;
+            this.remoteChanges.changedRecordCarIds.clear();
+            this.remoteChanges.unknownRecordChanges = false;
+          },
+
+          queueRemoteChangeTask(task) {
+            this.remoteChangesDrain = this.remoteChangesDrain
+              .then(() => task())
+              .catch(error => {
+                console.error(error);
+              });
+          },
+
+          async handleRemoteDocumentsChanged(documents) {
+            if (!Array.isArray(documents) || documents.length === 0) return;
+
+            const unresolvedRecordIds = [];
+
+            for (const document of documents) {
+              if (document.id.startsWith('car:')) {
+                this.remoteChanges.carsChanged = true;
+                continue;
+              }
+
+              if (!document.id.startsWith('record:')) {
+                continue;
+              }
+
+              const carId = document.data?.carId ? String(document.data.carId) : null;
+              if (carId) {
+                this.remoteChanges.changedRecordCarIds.add(carId);
+              } else {
+                unresolvedRecordIds.push(document.id);
+              }
+            }
+
+            if (!unresolvedRecordIds.length || !this.backend.isReady()) {
+              return;
+            }
+
+            const carIdsByDocumentId = await this.backend.readRecordCarIds(unresolvedRecordIds);
+            for (const id of unresolvedRecordIds) {
+              const carId = carIdsByDocumentId[id];
+              if (carId) {
+                this.remoteChanges.changedRecordCarIds.add(carId);
+              } else {
+                this.remoteChanges.unknownRecordChanges = true;
+              }
+            }
+          },
+
+          async flushRemoteChanges() {
+            const hasChanges =
+              this.remoteChanges.carsChanged ||
+              this.remoteChanges.unknownRecordChanges ||
+              this.remoteChanges.changedRecordCarIds.size > 0;
+
+            if (!hasChanges) return;
+
+            if (!this.backend.isReady()) {
+              this.resetRemoteChanges();
+              return;
+            }
+
+            if (this.remoteChanges.carsChanged) {
+              await this.reloadCars();
+            }
+
+            const activeCarId = this.detail.carId;
+            const shouldRefreshActiveCar =
+              Boolean(activeCarId) &&
+              (this.remoteChanges.unknownRecordChanges ||
+                this.remoteChanges.changedRecordCarIds.has(activeCarId));
+
+            if (shouldRefreshActiveCar) {
+              await this.refreshPlaceCounter();
+              await this.refreshRefuelStats();
+
+              if (this.isRecordTab()) {
+                this.recordPageCursors = [null];
+                this.recordPageCursorIndex = 0;
+                await this.loadRecordsPage(null);
+              }
+            }
+
+            this.resetRemoteChanges();
           },
 
           async triggerSync() {
@@ -1569,9 +2476,13 @@
           disconnectClient() {
             this.clxDocumentsChangedUnsubscribe?.();
             this.clxDocumentsChangedUnsubscribe = null;
+            this.clxSyncCompleteUnsubscribe?.();
+            this.clxSyncCompleteUnsubscribe = null;
             this.clxClient?.destroy();
             this.clxClient = null;
             this.backend.close();
+            this.resetRemoteChanges();
+            this.remoteChangesDrain = Promise.resolve();
           },
 
           async startDatabase() {
@@ -1591,11 +2502,17 @@
               }
 
               this.clxClient = client;
-              this.clxDocumentsChangedUnsubscribe = client.on('documentsChanged', async () => {
-                await this.reloadSnapshot();
+              this.clxDocumentsChangedUnsubscribe = client.on('documentsChanged', documents => {
+                this.queueRemoteChangeTask(() => this.handleRemoteDocumentsChanged(documents));
+              });
+              this.clxSyncCompleteUnsubscribe = client.on('syncComplete', () => {
+                this.queueRemoteChangeTask(() => this.flushRemoteChanges());
               });
 
-              await this.reloadSnapshot();
+              await this.reloadCars();
+              this.resetRecordPageState();
+              this.placeCounter = [];
+              await this.refreshRefuelStats();
               this.router.current = 'car-list';
               this.showToast('데이터베이스 연결됨', 'success');
             } catch (error) {
@@ -1603,6 +2520,30 @@
               this.showToast('데이터베이스 연결 실패', 'error');
             } finally {
               this.isStartingDb = false;
+            }
+          },
+
+          async switchTab(tab) {
+            if (this.detail.tab === tab) return;
+
+            this.detail.tab = tab;
+
+            if (!this.detail.carId) {
+              this.resetRecordPageState();
+              return;
+            }
+
+            if (this.isRecordTab(tab)) {
+              this.recordPageCursors = [null];
+              this.recordPageCursorIndex = 0;
+              await this.loadRecordsPage(null);
+              await this.refreshPlaceCounter();
+            } else {
+              this.resetRecordPageState();
+            }
+
+            if (tab === 'refuel') {
+              await this.refreshRefuelStats();
             }
           },
 
@@ -1659,7 +2600,7 @@
               createdAt: new Date().toISOString(),
             };
             await this.backend.stageUpsertDocument(`car:${c.id}`, c);
-            await this.reloadSnapshot();
+            await this.reloadCars();
             void this.triggerSync();
             this.closeModal();
             this.showToast('차량 추가됨', 'success');
@@ -1696,7 +2637,8 @@
               });
             }
 
-            await this.reloadSnapshot();
+            await this.reloadCars();
+            await this.refreshActiveCarData({ resetPage: true });
             void this.triggerSync();
             this.closeModal();
             this.showToast('기록 추가됨', 'success');
@@ -1707,16 +2649,18 @@
 
             if (confirm('정말로 이 기록을 삭제하시겠습니까?')) {
               await this.backend.stageDeleteDocument(`record:${id}`);
-              await this.reloadSnapshot();
+              await this.refreshActiveCarData({ resetPage: false });
               void this.triggerSync();
               this.showToast('기록이 삭제되었습니다.', 'success');
             }
           },
 
-          selectCar(id) {
+          async selectCar(id) {
             this.detail.carId = id;
             this.detail.tab = 'info';
             this.router.current = 'car-detail';
+            this.resetRecordPageState();
+            await Promise.all([this.refreshPlaceCounter(), this.refreshRefuelStats()]);
           },
 
           toggleEditInfo() {
@@ -1737,7 +2681,7 @@
               year: Number(this.detail.carInfoEditBuffer.year),
             });
 
-            await this.reloadSnapshot();
+            await this.reloadCars();
             void this.triggerSync();
             this.detail.isEditing = false;
             this.showToast('정보 저장됨', 'success');
@@ -1816,14 +2760,22 @@
             setTimeout(() => (this.toasts = this.toasts.filter(t => t.id !== id)), 3500);
           },
 
-          exportDB() {
-            if (!this.db) return;
-            const a = document.createElement('a');
-            a.href = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(this.db));
-            a.download = `vehlog_backup_${new Date().toISOString().slice(0, 10)}.json`;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
+          async exportDB() {
+            if (!this.backend.isReady()) return;
+
+            try {
+              const snapshot = await this.backend.loadSnapshot();
+              const a = document.createElement('a');
+              a.href =
+                'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(snapshot));
+              a.download = `vehlog_backup_${new Date().toISOString().slice(0, 10)}.json`;
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+            } catch (error) {
+              console.error(error);
+              this.showToast('백업 실패', 'error');
+            }
           },
 
           triggerImport() {
@@ -1842,7 +2794,12 @@
                 }
 
                 await this.backend.importSnapshot(JSON.parse(ev.target.result));
-                await this.reloadSnapshot();
+                this.detail = { tab: 'info' };
+                this.resetRecordPageState();
+                this.placeCounter = [];
+                this.refuelStats = { monthly: { current: 0, diff: 0 }, history: [] };
+                Alpine.store('app').refuelHistory = [];
+                await this.reloadCars();
                 void this.triggerSync();
                 this.router.current = 'car-list';
                 this.showToast('복원됨', 'success');
@@ -1858,6 +2815,11 @@
             this.disconnectClient();
             this.db = null;
             this.detail = { tab: 'info' };
+            this.resetRecordPageState();
+            this.placeCounter = [];
+            this.refuelStats = { monthly: { current: 0, diff: 0 }, history: [] };
+            Alpine.store('app').refuelHistory = [];
+            this.resetRemoteChanges();
             this.router.current = 'onboarding';
           },
         }));
@@ -1871,6 +2833,7 @@
           initChart() {
             this.$watch('$store.app.detail.tab', () => this.calcPoints());
             this.$watch('$store.app.db', () => this.calcPoints());
+            this.$watch('$store.app.refuelHistory', () => this.calcPoints());
             this.calcPoints();
           },
 
