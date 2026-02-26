@@ -1278,7 +1278,7 @@
           return {
             id: row.id,
             at: row.at,
-            seq: row.seq,
+            seq: row.seq < 0 ? null : row.seq,
             del: row.del,
             data: row.data,
           };
@@ -1488,7 +1488,7 @@
               this.withLocalIndexes({
                 id: documentId,
                 at: Math.max(Number(atHint) || Date.now(), Date.now()),
-                seq: null,
+                seq: -1,
                 del: false,
                 data: {
                   carId: normalizedCarId,
@@ -1529,7 +1529,7 @@
               this.withLocalIndexes({
                 id: documentId,
                 at,
-                seq: null,
+                seq: -1,
                 del: true,
                 data: undefined,
               })
@@ -1541,7 +1541,7 @@
             this.withLocalIndexes({
               id: documentId,
               at,
-              seq: null,
+              seq: -1,
               del: false,
               data: {
                 carId: normalizedCarId,
@@ -1603,7 +1603,7 @@
         }
 
         async readPendingIds() {
-          const ids = await this.getTable().where('seq').equals(null).primaryKeys();
+          const ids = await this.getTable().where('seq').equals(-1).primaryKeys();
           return ids.map(id => String(id));
         }
 
@@ -1890,7 +1890,7 @@
             this.withLocalIndexes({
               id,
               at: now,
-              seq: null,
+              seq: -1,
               del: false,
               data,
             })
@@ -1927,7 +1927,7 @@
             this.withLocalIndexes({
               id,
               at: tombstoneAt,
-              seq: null,
+              seq: -1,
               del: true,
               data: undefined,
             })
@@ -1948,7 +1948,7 @@
               this.withLocalIndexes({
                 id: this.getPlaceCounterDocumentId(id.slice(4)),
                 at: tombstoneAt + 1,
-                seq: null,
+                seq: -1,
                 del: true,
                 data: undefined,
               })
@@ -1996,7 +1996,7 @@
               this.withLocalIndexes({
                 id: `car:${id}`,
                 at: ++at,
-                seq: null,
+                seq: -1,
                 del: false,
                 data: car,
               })
@@ -2021,7 +2021,7 @@
               this.withLocalIndexes({
                 id: `record:${id}`,
                 at: ++at,
-                seq: null,
+                seq: -1,
                 del: false,
                 data: record,
               })
@@ -2038,7 +2038,7 @@
               this.withLocalIndexes({
                 id,
                 at: ++at,
-                seq: null,
+                seq: -1,
                 del: false,
                 data: { carId, places },
               })
@@ -2056,7 +2056,7 @@
               this.withLocalIndexes({
                 id: row.id,
                 at: ++at,
-                seq: null,
+                seq: -1,
                 del: true,
                 data: undefined,
               })
