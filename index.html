@@ -1025,7 +1025,7 @@
                       focus-visible:ring-1 focus-visible:outline-none"
                   />
                 </div>
-                <div class="grid gap-2" x-show="forms.record.subType === 'full'">
+                <div class="grid gap-2" x-show="forms.record.subType !== 'full'">
                   <label class="text-sm font-medium">연료게이지 (%)</label>
                   <input
                     type="number"
@@ -1036,6 +1036,19 @@
                   />
                 </div>
               </div>
+              <label
+                class="border-input bg-accent/30 flex cursor-pointer items-center gap-2 rounded-md
+                  border px-3 py-2"
+              >
+                <input
+                  type="checkbox"
+                  x-model="forms.record.prevRefuelUnknown"
+                  class="text-brand border-input h-4 w-4 rounded"
+                />
+                <span class="text-muted-foreground text-xs"
+                  >이전 주유이력이 불분명함 (이번 기록은 연비 계산에서 제외)</span
+                >
+              </label>
             </div>
             <!-- Type: Maintenance -->
             <div
@@ -1143,6 +1156,58 @@
 
     <script>
       const createEmptyDatabase = () => ({ config: { type: 'clxdb' }, cars: [], records: [] });
+
+      const isFullRefuelRecord = record => String(record?.subType || 'full') !== 'partial';
+
+      const hasUnknownPreviousRefuel = record => Boolean(record?.prevRefuelUnknown);
+
+      const calculateRefuelEfficiencyEntries = (records, limit = Infinity) => {
+        const entries = [];
+        const maxEntries = Number.isFinite(limit) ? Math.max(1, Number(limit) || 1) : Infinity;
+
+        let startFullRecord = null;
+        let consumedVolume = 0;
+        let intervalValid = true;
+
+        const chronologicalRecords = [...(records || [])].reverse();
+
+        for (const record of chronologicalRecords) {
+          const volume = Number(record?.volume) || 0;
+          if (volume <= 0) continue;
+
+          if (!startFullRecord) {
+            if (!isFullRefuelRecord(record)) continue;
+            startFullRecord = record;
+            consumedVolume = 0;
+            intervalValid = true;
+            continue;
+          }
+
+          if (hasUnknownPreviousRefuel(record)) {
+            intervalValid = false;
+          }
+
+          consumedVolume += volume;
+
+          if (!isFullRefuelRecord(record)) continue;
+
+          const distance = (Number(record.odometer) || 0) - (Number(startFullRecord.odometer) || 0);
+          if (intervalValid && distance > 0 && consumedVolume > 0) {
+            entries.push({
+              recordId: String(record.id || ''),
+              date: String(record.date || '').substring(5),
+              dist: distance,
+              eff: (distance / consumedVolume).toFixed(1),
+            });
+          }
+
+          startFullRecord = record;
+          consumedVolume = 0;
+          intervalValid = true;
+        }
+
+        return Number.isFinite(maxEntries) ? entries.slice(-maxEntries) : entries;
+      };
 
       class DexieClxBackend {
         constructor() {
@@ -1819,12 +1884,13 @@
 
           const historyLimit = Math.max(1, Math.min(50, Number(limit) || 20));
           const recentRefuels = [];
+          let fullRefuelCount = 0;
 
           let cursor = null;
           const chunkSize = Math.max(60, historyLimit * 3);
           let safetyCount = 0;
 
-          while (recentRefuels.length < historyLimit + 1 && safetyCount < 300) {
+          while (fullRefuelCount < historyLimit + 1 && safetyCount < 300) {
             safetyCount += 1;
 
             const rows = await this.readRecordRowsChunk({
@@ -1844,8 +1910,14 @@
               const volume = Number(row.data.volume) || 0;
               if (volume <= 0) continue;
 
-              recentRefuels.push(this.toRecordEntity(row));
-              if (recentRefuels.length >= historyLimit + 1) {
+              const record = this.toRecordEntity(row);
+              recentRefuels.push(record);
+
+              if (isFullRefuelRecord(record)) {
+                fullRefuelCount += 1;
+              }
+
+              if (fullRefuelCount >= historyLimit + 1) {
                 break;
               }
             }
@@ -1857,23 +1929,14 @@
             cursor = this.buildRecordCursorFromRow(rows[rows.length - 1]);
           }
 
-          const history = [];
+          const history = calculateRefuelEfficiencyEntries(recentRefuels, historyLimit).map(
+            entry => ({
+              date: entry.date,
+              val: parseFloat(entry.eff),
+            })
+          );
 
-          for (let i = 0; i < Math.min(recentRefuels.length - 1, historyLimit); i++) {
-            const record = recentRefuels[i];
-            const prevRecord = recentRefuels[i + 1];
-            const distance = (Number(record.odometer) || 0) - (Number(prevRecord.odometer) || 0);
-            const volume = Number(record.volume) || 0;
-
-            if (distance <= 0 || volume <= 0) continue;
-
-            history.push({
-              date: String(record.date || '').substring(5),
-              val: parseFloat((distance / volume).toFixed(1)),
-            });
-          }
-
-          return history.reverse();
+          return history;
         }
 
         replicate(onUpdate) {
@@ -2333,17 +2396,16 @@
             }
           },
 
-          getEfficiency(record, index) {
-            if (this.detail.tab !== 'refuel' || !record.volume) return null;
+          getEfficiency(record, _index) {
+            if (this.detail.tab !== 'refuel' || !record?.id) return null;
 
-            const records = this.filteredRecords;
-            if (index >= records.length - 1) return null;
+            const targetRecordId = String(record.id);
+            const entry = calculateRefuelEfficiencyEntries(this.filteredRecords).find(
+              item => item.recordId === targetRecordId
+            );
 
-            const prevRecord = records[index + 1];
-            const dist = record.odometer - prevRecord.odometer;
-            if (dist <= 0) return null;
-
-            return { dist: dist, eff: (dist / record.volume).toFixed(1) };
+            if (!entry) return null;
+            return { dist: entry.dist, eff: entry.eff };
           },
 
           getMonthlyRefuelCost() {
@@ -2578,6 +2640,7 @@
                 unitPrice: '',
                 volume: '',
                 fuelGauge: '',
+                prevRefuelUnknown: false,
                 item: '',
                 memo: '',
               };
@@ -2622,6 +2685,7 @@
               unitPrice: Number(r.unitPrice) || null,
               volume: Number(r.volume) || null,
               fuelGauge: Number(r.fuelGauge) || null,
+              prevRefuelUnknown: Boolean(r.prevRefuelUnknown),
               item: r.item,
               memo: r.memo,
               createdAt: new Date().toISOString(),
