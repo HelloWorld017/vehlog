@@ -99,6 +99,32 @@
       [x-cloak] {
         display: none !important;
       }
+
+      ::view-transition-old(vt-header),
+      ::view-transition-new(vt-header),
+      ::view-transition-old(vt-route-panel),
+      ::view-transition-new(vt-route-panel),
+      ::view-transition-old(vt-tab-panel),
+      ::view-transition-new(vt-tab-panel) {
+        animation-duration: 260ms;
+        animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+        pointer-events: none;
+      }
+
+      :root {
+        view-transition-name: none;
+      }
+
+      ::view-transition {
+        pointer-events: none;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        ::view-transition-old(*),
+        ::view-transition-new(*) {
+          animation: none;
+        }
+      }
     </style>
 
     <script src="https://cdn.jsdelivr.net/npm/dexie@4.2.1/dist/dexie.min.js"></script>
@@ -133,9 +159,7 @@
       >
         <div class="flex items-center gap-3">
           <template x-if="router.current === 'car-list'">
-            <div
-              class="animate-in fade-in slide-in-from-left-2 flex items-center gap-3 duration-300"
-            >
+            <div class="flex items-center gap-3" style="view-transition-name: vt-header">
               <div
                 class="bg-brand shadow-brand/20 flex h-9 w-9 items-center justify-center rounded-lg
                   font-bold text-white shadow-lg"
@@ -146,11 +170,9 @@
             </div>
           </template>
           <template x-if="router.current === 'car-detail'">
-            <div
-              class="animate-in fade-in slide-in-from-left-2 flex items-center gap-3 duration-300"
-            >
+            <div class="flex items-center gap-3" style="view-transition-name: vt-header">
               <button
-                @click="router.current = 'car-list'"
+                @click="goToCarList()"
                 class="hover:bg-accent hover:border-border flex h-9 w-9 items-center justify-center
                   rounded-md border border-transparent transition-colors"
               >
@@ -210,7 +232,7 @@
       <!-- View: Onboarding -->
       <main
         x-show="router.current === 'onboarding'"
-        x-transition:enter="transition ease-out duration-300"
+        :style="router.current === 'onboarding' ? { 'view-transition-name': 'vt-route-panel' } : {}"
         class="flex flex-1 flex-col items-center justify-center pb-20 text-center"
       >
         <div class="relative mb-8">
@@ -254,7 +276,7 @@
       <!-- View: Car Selection (List) -->
       <main
         x-show="router.current === 'car-list'"
-        x-transition:enter="transition ease-out duration-300"
+        :style="router.current === 'car-list' ? { 'view-transition-name': 'vt-route-panel' } : {}"
         class="flex-1"
       >
         <!-- (Car List Content preserved) -->
@@ -323,6 +345,7 @@
       <!-- View: Car Detail -->
       <main
         x-show="router.current === 'car-detail'"
+        :style="router.current === 'car-detail' ? { 'view-transition-name': 'vt-route-panel' } : {}"
         class="flex h-full flex-1 flex-col overflow-hidden"
       >
         <!-- Tabs -->
@@ -330,25 +353,26 @@
           <template x-for="tab in ['info', 'refuel', 'maintenance', 'etc']">
             <button
               @click="switchTab(tab)"
-              class="hover:text-foreground relative px-4 py-2.5 text-sm font-medium
-                transition-colors"
-              :class="detail.tab === tab ? 'text-brand' : 'text-muted-foreground'"
+              class="relative px-4 py-2.5 text-sm font-medium transition-colors"
+              :class="detail.tab === tab ? 'text-brand' : 'text-muted-foreground hover:text-foreground'"
             >
               <span
                 x-text="({ info: '정보', refuel: '주유', maintenance: '정비', etc: '기타' })[tab]"
               >
               </span>
               <div
-                x-show="detail.tab === tab"
-                class="bg-brand absolute right-0 bottom-0 left-0 h-0.5"
-                x-transition
+                :style="({ opacity: +(detail.tab === tab) })"
+                class="bg-brand absolute right-0 bottom-0 left-0 h-0.5 transition-opacity"
               ></div>
             </button>
           </template>
         </div>
 
         <!-- Content Area -->
-        <div class="relative flex flex-1 flex-col overflow-hidden">
+        <div
+          class="relative flex flex-1 flex-col overflow-hidden"
+          style="view-transition-name: vt-tab-panel"
+        >
           <!-- Tab: Info -->
           <div
             x-show="detail.tab === 'info'"
@@ -2233,6 +2257,26 @@
             Alpine.store('app').refuelHistory = [];
           },
 
+          supportsViewTransition() {
+            return (
+              typeof document.startViewTransition === 'function' &&
+              !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+            );
+          },
+
+          async runViewTransition(update) {
+            if (!this.supportsViewTransition()) {
+              return await update();
+            }
+
+            const transition = document.startViewTransition(async () => {
+              await update();
+              await Alpine.nextTick();
+            });
+
+            await (transition.updateCallbackDone || transition.finished).catch(() => {});
+          },
+
           get activeCar() {
             return this.db?.cars.find(c => c.id === this.detail.carId) || null;
           },
@@ -2575,7 +2619,9 @@
               this.resetRecordPageState();
               this.placeCounter = [];
               await this.refreshRefuelStats();
-              this.router.current = 'car-list';
+              await this.runViewTransition(() => {
+                this.router.current = 'car-list';
+              });
               this.showToast('데이터베이스 연결됨', 'success');
             } catch (error) {
               console.error(error);
@@ -2588,7 +2634,9 @@
           async switchTab(tab) {
             if (this.detail.tab === tab) return;
 
-            this.detail.tab = tab;
+            await this.runViewTransition(() => {
+              this.detail.tab = tab;
+            });
 
             if (!this.detail.carId) {
               this.resetRecordPageState();
@@ -2719,11 +2767,21 @@
             }
           },
 
+          async goToCarList() {
+            await this.runViewTransition(() => {
+              this.router.current = 'car-list';
+              this.detail.carId = null;
+            });
+          },
+
           async selectCar(id) {
-            this.detail.carId = id;
-            this.detail.tab = 'info';
-            this.router.current = 'car-detail';
-            this.resetRecordPageState();
+            await this.runViewTransition(() => {
+              this.detail.carId = id;
+              this.detail.tab = 'info';
+              this.router.current = 'car-detail';
+              this.resetRecordPageState();
+            });
+
             await Promise.all([this.refreshPlaceCounter(), this.refreshRefuelStats()]);
           },
 
