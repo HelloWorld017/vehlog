@@ -230,582 +230,587 @@
       </header>
 
       <!-- View: Onboarding -->
-      <main
-        x-show="router.current === 'onboarding'"
-        :style="router.current === 'onboarding' ? { 'view-transition-name': 'vt-route-panel' } : {}"
-        class="flex flex-1 flex-col items-center justify-center pb-20 text-center"
-      >
-        <div class="relative mb-8">
-          <div
-            class="from-brand shadow-brand/20 flex h-20 w-20 items-center justify-center rounded-2xl
-              bg-gradient-to-br to-purple-600 shadow-2xl"
-          >
-            <i x-lucide="database" class="h-10 w-10 text-white"></i>
-          </div>
-        </div>
-        <h1 class="mb-4 text-4xl font-bold tracking-tight md:text-5xl">차계부 관리의 시작</h1>
-        <p class="text-muted-foreground mb-12 max-w-md text-lg">
-          안전하게 내 차의 모든 기록을 관리하세요.<br />데이터는 브라우저에 저장되거나 클라우드와
-          연동됩니다.
-        </p>
-        <div class="w-full max-w-xl">
-          <button
-            @click="startDatabase()"
-            :disabled="isStartingDb"
-            class="group border-border bg-card hover:bg-accent relative w-full overflow-hidden
-              rounded-xl border p-6 text-left transition-all duration-300
-              disabled:pointer-events-none disabled:opacity-70"
-          >
+      <template x-if="router.current === 'onboarding'">
+        <main
+          style="view-transition-name: vt-route-panel"
+          class="flex flex-1 flex-col items-center justify-center pb-20 text-center"
+        >
+          <div class="relative mb-8">
             <div
-              class="bg-secondary mb-4 flex h-10 w-10 items-center justify-center rounded-full
-                transition-transform group-hover:scale-110"
+              class="from-brand shadow-brand/20 flex h-20 w-20 items-center justify-center
+                rounded-2xl bg-gradient-to-br to-purple-600 shadow-2xl"
             >
-              <i x-lucide="database" class="h-5 w-5"></i>
+              <i x-lucide="database" class="h-10 w-10 text-white"></i>
             </div>
-            <h3
-              class="mb-1 text-lg font-semibold"
-              x-text="isStartingDb ? '여는 중...' : '시작하기'"
-            ></h3>
-            <p class="text-muted-foreground text-sm">
-              데이터베이스 연결을 시작하고 저장소 선택 및 잠금 해제를 진행합니다.
-            </p>
-          </button>
-        </div>
-      </main>
+          </div>
+          <h1 class="mb-4 text-4xl font-bold tracking-tight md:text-5xl">차계부 관리의 시작</h1>
+          <p class="text-muted-foreground mb-12 max-w-md text-lg">
+            안전하게 내 차의 모든 기록을 관리하세요.<br />데이터는 브라우저에 저장되거나 클라우드와
+            연동됩니다.
+          </p>
+          <div class="w-full max-w-xl">
+            <button
+              @click="startDatabase()"
+              :disabled="isStartingDb"
+              class="group border-border bg-card hover:bg-accent relative w-full overflow-hidden
+                rounded-xl border p-6 text-left transition-all duration-300
+                disabled:pointer-events-none disabled:opacity-70"
+            >
+              <div
+                class="bg-secondary mb-4 flex h-10 w-10 items-center justify-center rounded-full
+                  transition-transform group-hover:scale-110"
+              >
+                <i x-lucide="database" class="h-5 w-5"></i>
+              </div>
+              <h3
+                class="mb-1 text-lg font-semibold"
+                x-text="isStartingDb ? '여는 중...' : '시작하기'"
+              ></h3>
+              <p class="text-muted-foreground text-sm">
+                데이터베이스 연결을 시작하고 저장소 선택 및 잠금 해제를 진행합니다.
+              </p>
+            </button>
+          </div>
+        </main>
+      </template>
 
       <!-- View: Car Selection (List) -->
-      <main
-        x-show="router.current === 'car-list'"
-        :style="router.current === 'car-list' ? { 'view-transition-name': 'vt-route-panel' } : {}"
-        class="flex-1"
-      >
-        <!-- (Car List Content preserved) -->
-        <div class="mb-6 flex items-end justify-between">
-          <div>
-            <h2 class="text-2xl font-bold">나의 차량</h2>
-            <p class="text-muted-foreground mt-1 text-sm">관리할 차량을 선택하거나 추가하세요.</p>
-          </div>
-          <button
-            @click="openModal('add-car')"
-            class="focus-visible:ring-ring bg-primary text-primary-foreground hover:bg-primary/90
-              inline-flex h-10 items-center justify-center rounded-md px-4 py-2 text-sm font-medium
-              shadow-xs transition-colors focus-visible:ring-1 focus-visible:outline-none"
-          >
-            <i x-lucide="plus" class="mr-2 h-4 w-4"></i> 차량 추가
-          </button>
-        </div>
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          <template x-for="car in db?.cars" :key="car.id">
-            <div
-              @click="selectCar(car.id)"
-              class="group bg-card border-border hover:border-brand/50 hover:bg-accent/50 relative
-                cursor-pointer rounded-xl border p-5 transition-all duration-200"
+      <template x-if="router.current === 'car-list'">
+        <main style="view-transition-name: vt-route-panel" class="flex-1">
+          <!-- (Car List Content preserved) -->
+          <div class="mb-6 flex items-end justify-between">
+            <div>
+              <h2 class="text-2xl font-bold">나의 차량</h2>
+              <p class="text-muted-foreground mt-1 text-sm">관리할 차량을 선택하거나 추가하세요.</p>
+            </div>
+            <button
+              @click="openModal('add-car')"
+              class="focus-visible:ring-ring bg-primary text-primary-foreground hover:bg-primary/90
+                inline-flex h-10 items-center justify-center rounded-md px-4 py-2 text-sm
+                font-medium shadow-xs transition-colors focus-visible:ring-1
+                focus-visible:outline-none"
             >
-              <div class="relative z-10 flex h-full flex-col justify-between">
-                <div>
-                  <div class="mb-2 flex items-start justify-between">
-                    <span
-                      class="border-border text-foreground inline-flex items-center rounded-md
-                        border px-2.5 py-0.5 text-xs font-semibold transition-colors"
-                      x-text="car.fuelType"
-                    >
-                    </span>
-                    <i
-                      x-lucide="chevron-right"
-                      class="text-muted-foreground group-hover:text-foreground h-4 w-4
-                        transition-colors"
-                    >
-                    </i>
+              <i x-lucide="plus" class="mr-2 h-4 w-4"></i> 차량 추가
+            </button>
+          </div>
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <template x-for="car in db?.cars" :key="car.id">
+              <div
+                @click="selectCar(car.id)"
+                class="group bg-card border-border hover:border-brand/50 hover:bg-accent/50 relative
+                  cursor-pointer rounded-xl border p-5 transition-all duration-200"
+              >
+                <div class="relative z-10 flex h-full flex-col justify-between">
+                  <div>
+                    <div class="mb-2 flex items-start justify-between">
+                      <span
+                        class="border-border text-foreground inline-flex items-center rounded-md
+                          border px-2.5 py-0.5 text-xs font-semibold transition-colors"
+                        x-text="car.fuelType"
+                      >
+                      </span>
+                      <i
+                        x-lucide="chevron-right"
+                        class="text-muted-foreground group-hover:text-foreground h-4 w-4
+                          transition-colors"
+                      >
+                      </i>
+                    </div>
+                    <h3 class="text-xl font-bold tracking-tight" x-text="car.number"></h3>
+                    <p
+                      class="text-muted-foreground text-sm"
+                      x-text="car.maker + ' ' + car.model"
+                    ></p>
                   </div>
-                  <h3 class="text-xl font-bold tracking-tight" x-text="car.number"></h3>
-                  <p class="text-muted-foreground text-sm" x-text="car.maker + ' ' + car.model"></p>
-                </div>
-                <div
-                  class="border-border text-muted-foreground mt-6 flex justify-between border-t pt-4
-                    text-xs"
-                >
-                  <span x-text="car.year + '년식'"></span>
-                  <span x-text="formatDistance(car.totalDistance)"></span>
+                  <div
+                    class="border-border text-muted-foreground mt-6 flex justify-between border-t
+                      pt-4 text-xs"
+                  >
+                    <span x-text="car.year + '년식'"></span>
+                    <span x-text="formatDistance(car.totalDistance)"></span>
+                  </div>
                 </div>
               </div>
-            </div>
-          </template>
-          <template x-if="!db?.cars.length">
-            <div
-              class="text-muted-foreground border-border bg-card/50 col-span-full flex flex-col
-                items-center justify-center rounded-xl border border-dashed py-20"
-            >
-              <i x-lucide="car" class="mb-4 h-12 w-12 opacity-50"></i>
-              <p class="text-lg font-medium">등록된 차량이 없습니다.</p>
-            </div>
-          </template>
-        </div>
-      </main>
+            </template>
+            <template x-if="!db?.cars.length">
+              <div
+                class="text-muted-foreground border-border bg-card/50 col-span-full flex flex-col
+                  items-center justify-center rounded-xl border border-dashed py-20"
+              >
+                <i x-lucide="car" class="mb-4 h-12 w-12 opacity-50"></i>
+                <p class="text-lg font-medium">등록된 차량이 없습니다.</p>
+              </div>
+            </template>
+          </div>
+        </main>
+      </template>
 
       <!-- View: Car Detail -->
-      <main
-        x-show="router.current === 'car-detail'"
-        :style="router.current === 'car-detail' ? { 'view-transition-name': 'vt-route-panel' } : {}"
-        class="flex h-full flex-1 flex-col overflow-hidden"
-      >
-        <!-- Tabs -->
-        <div class="border-border mb-6 flex w-full items-center border-b">
-          <template x-for="tab in ['info', 'refuel', 'maintenance', 'etc']">
-            <button
-              @click="switchTab(tab)"
-              class="relative px-4 py-2.5 text-sm font-medium transition-colors"
-              :class="detail.tab === tab ? 'text-brand' : 'text-muted-foreground hover:text-foreground'"
-            >
-              <span
-                x-text="({ info: '정보', refuel: '주유', maintenance: '정비', etc: '기타' })[tab]"
-              >
-              </span>
-              <div
-                :style="({ opacity: +(detail.tab === tab) })"
-                class="bg-brand absolute right-0 bottom-0 left-0 h-0.5 transition-opacity"
-              ></div>
-            </button>
-          </template>
-        </div>
-
-        <!-- Content Area -->
-        <div
-          class="relative flex flex-1 flex-col overflow-hidden"
-          style="view-transition-name: vt-tab-panel"
+      <template x-if="router.current === 'car-detail'">
+        <main
+          class="flex h-full flex-1 flex-col overflow-hidden"
+          style="view-transition-name: vt-route-panel"
         >
-          <!-- Tab: Info -->
-          <div
-            x-show="detail.tab === 'info'"
-            class="animate-in fade-in zoom-in-95 flex-1 overflow-y-auto pb-20 duration-200"
-          >
-            <div class="bg-card border-border rounded-xl border p-6">
-              <!-- Info Header & Form (Preserved) -->
-              <div class="mb-6 flex items-center justify-between">
-                <h3 class="flex items-center gap-2 text-lg font-bold">
-                  <i x-lucide="info" class="text-brand h-4 w-4"></i> 기본 정보
-                </h3>
-                <button
-                  @click="toggleEditInfo()"
-                  class="border-border hover:bg-accent flex items-center gap-1.5 rounded-md border
-                    px-3 py-1.5 text-xs transition-colors"
-                  :class="detail.isEditing ? 'text-red-400 border-red-900/50 bg-red-900/10' : 'text-muted-foreground'"
+          <!-- Tabs -->
+          <div class="border-border mb-6 flex w-full items-center border-b">
+            <template x-for="tab in ['info', 'refuel', 'maintenance', 'etc']">
+              <button
+                @click="switchTab(tab)"
+                class="relative px-4 py-2.5 text-sm font-medium transition-colors"
+                :class="detail.tab === tab ? 'text-brand' : 'text-muted-foreground hover:text-foreground'"
+              >
+                <span
+                  x-text="({ info: '정보', refuel: '주유', maintenance: '정비', etc: '기타' })[tab]"
                 >
-                  <i x-lucide-dynamic="detail.isEditing ? 'x' : 'pencil'" class="h-3 w-3"></i>
-                  <span x-text="detail.isEditing ? '취소' : '편집'"></span>
+                </span>
+                <div
+                  :style="({ opacity: +(detail.tab === tab) })"
+                  class="bg-brand absolute right-0 bottom-0 left-0 h-0.5 transition-opacity"
+                ></div>
+              </button>
+            </template>
+          </div>
+
+          <!-- Content Area -->
+          <div
+            class="relative flex flex-1 flex-col overflow-hidden"
+            style="view-transition-name: vt-tab-panel"
+          >
+            <!-- Tab: Info -->
+            <div
+              x-show="detail.tab === 'info'"
+              class="animate-in fade-in zoom-in-95 flex-1 overflow-y-auto pb-20 duration-200"
+            >
+              <div class="bg-card border-border rounded-xl border p-6">
+                <!-- Info Header & Form (Preserved) -->
+                <div class="mb-6 flex items-center justify-between">
+                  <h3 class="flex items-center gap-2 text-lg font-bold">
+                    <i x-lucide="info" class="text-brand h-4 w-4"></i> 기본 정보
+                  </h3>
+                  <button
+                    @click="toggleEditInfo()"
+                    class="border-border hover:bg-accent flex items-center gap-1.5 rounded-md border
+                      px-3 py-1.5 text-xs transition-colors"
+                    :class="detail.isEditing ? 'text-red-400 border-red-900/50 bg-red-900/10' : 'text-muted-foreground'"
+                  >
+                    <i x-lucide-dynamic="detail.isEditing ? 'x' : 'pencil'" class="h-3 w-3"></i>
+                    <span x-text="detail.isEditing ? '취소' : '편집'"></span>
+                  </button>
+                </div>
+                <!-- Info View -->
+                <div
+                  x-show="!detail.isEditing"
+                  class="grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2"
+                >
+                  <template
+                    x-for="label in ['차량번호', '제조사', '차종', '등급', '연식', '연료', '배기량', '누적 주행거리']"
+                  >
+                    <div class="space-y-1">
+                      <p
+                        class="text-muted-foreground text-xs font-medium tracking-wider uppercase"
+                        x-text="label"
+                      ></p>
+                      <p class="text-lg font-medium" x-text="getCarInfoValue(label)"></p>
+                    </div>
+                  </template>
+                </div>
+
+                <!-- Info Edit Form -->
+                <template x-if="detail.carInfoEditBuffer">
+                  <form
+                    x-show="detail.isEditing"
+                    @submit.prevent="saveCarInfo"
+                    class="grid grid-cols-1 gap-4 md:grid-cols-2"
+                  >
+                    <div class="space-y-1.5">
+                      <label class="text-muted-foreground text-xs font-medium">차량번호</label>
+                      <input
+                        type="text"
+                        x-model="detail.carInfoEditBuffer.number"
+                        class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md
+                          border bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
+                          focus-visible:ring-1 focus-visible:outline-none"
+                      />
+                    </div>
+                    <div class="space-y-1.5">
+                      <label class="text-muted-foreground text-xs font-medium">제조사</label>
+                      <input
+                        type="text"
+                        x-model="detail.carInfoEditBuffer.maker"
+                        class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md
+                          border bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
+                          focus-visible:ring-1 focus-visible:outline-none"
+                      />
+                    </div>
+                    <div class="space-y-1.5">
+                      <label class="text-muted-foreground text-xs font-medium">차종</label>
+                      <input
+                        type="text"
+                        x-model="detail.carInfoEditBuffer.model"
+                        class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md
+                          border bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
+                          focus-visible:ring-1 focus-visible:outline-none"
+                      />
+                    </div>
+                    <div class="space-y-1.5">
+                      <label class="text-muted-foreground text-xs font-medium">등급</label>
+                      <input
+                        type="text"
+                        x-model="detail.carInfoEditBuffer.grade"
+                        class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md
+                          border bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
+                          focus-visible:ring-1 focus-visible:outline-none"
+                      />
+                    </div>
+                    <div class="space-y-1.5">
+                      <label class="text-muted-foreground text-xs font-medium">연식</label>
+                      <input
+                        type="number"
+                        x-model="detail.carInfoEditBuffer.year"
+                        class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md
+                          border bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
+                          focus-visible:ring-1 focus-visible:outline-none"
+                      />
+                    </div>
+                    <div class="space-y-1.5">
+                      <label class="text-muted-foreground text-xs font-medium">연료</label>
+                      <select
+                        x-model="detail.carInfoEditBuffer.fuelType"
+                        class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md
+                          border bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
+                          focus-visible:ring-1 focus-visible:outline-none"
+                      >
+                        <option>휘발유</option>
+                        <option>경유</option>
+                        <option>LPG</option>
+                        <option>전기</option>
+                        <option>하이브리드</option>
+                      </select>
+                    </div>
+                    <div class="col-span-full flex justify-end pt-4">
+                      <button
+                        type="submit"
+                        class="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex
+                          h-9 items-center justify-center rounded-md px-4 text-sm font-medium shadow
+                          transition-colors"
+                      >
+                        저장
+                      </button>
+                    </div>
+                  </form>
+                </template>
+              </div>
+            </div>
+
+            <!-- Tab: Refuel / Maintenance / Etc -->
+            <div
+              x-show="['refuel', 'maintenance', 'etc'].includes(detail.tab)"
+              class="animate-in fade-in zoom-in-95 flex flex-1 flex-col overflow-hidden
+                duration-200"
+            >
+              <!-- Dashboard (Refuel Only) -->
+              <div x-show="detail.tab === 'refuel'" class="mb-6 flex gap-4">
+                <!-- Card 1: Cost Comparison -->
+                <div
+                  class="bg-card border-border flex h-32 max-w-[300px] flex-1 flex-col
+                    justify-between rounded-xl border p-4"
+                >
+                  <span class="text-muted-foreground text-xs font-medium">이번 달 주유비</span>
+                  <div class="mt-2 flex flex-col justify-start gap-1">
+                    <span
+                      class="text-4xl font-bold tracking-tight"
+                      x-text="formatNumber(getMonthlyRefuelCost().current)"
+                    ></span>
+                    <div
+                      class="mt-2 flex items-center gap-1 text-xs font-medium"
+                      :class="getMonthlyRefuelCost().diff > 0 ? 'text-red-400' : 'text-green-400'"
+                    >
+                      <span class="text-muted-foreground">지난달 대비</span>
+                      <span x-text="formatNumber(getMonthlyRefuelCost().diff)"></span>
+                      <span x-text="getMonthlyRefuelCost().diff > 0 ? '\u25b2' : '\u25bc'"></span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Card 2: Efficiency Graph -->
+                <div
+                  x-data="chart()"
+                  x-init="initChart()"
+                  @mousemove="handleMouseMove"
+                  @mouseleave="hover = false"
+                  class="bg-card border-border group relative flex h-32 max-w-[400px] flex-1
+                    flex-col overflow-hidden rounded-xl border p-4 select-none"
+                >
+                  <div class="pointer-events-none relative z-20 mb-4">
+                    <span class="text-muted-foreground text-xs font-medium"
+                      >최근 연비 추이 (km/L)</span
+                    >
+                    <div x-show="points.length > 0" class="absolute top-0 right-0 text-right">
+                      <div
+                        class="text-foreground text-2xl font-bold tabular-nums"
+                        x-text="points.at(hover ? hoverIndex : -1)?.val"
+                      ></div>
+                      <div
+                        class="text-muted-foreground text-[10px]"
+                        x-text="points.at(hover ? hoverIndex : -1)?.date"
+                      ></div>
+                    </div>
+                  </div>
+
+                  <div class="relative z-10 min-h-0 w-full flex-1">
+                    <template x-if="points.length > 1">
+                      <svg
+                        class="h-full w-full overflow-visible"
+                        viewBox="0 0 100 100"
+                        preserveAspectRatio="none"
+                      >
+                        <defs>
+                          <linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
+                            <stop offset="0%" stop-color="white" stop-opacity="0.2" />
+                            <stop offset="100%" stop-color="white" stop-opacity="0" />
+                          </linearGradient>
+                        </defs>
+
+                        <!-- Gradient Area -->
+                        <path :d="getAreaPath()" fill="url(#chartGradient)" stroke="none" />
+
+                        <!-- Line -->
+                        <path
+                          :d="getPath()"
+                          fill="none"
+                          stroke="white"
+                          stroke-width="1.5"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          vector-effect="non-scaling-stroke"
+                        />
+
+                        <!-- Hover Line & Dot (Custom Scaling) -->
+                        <g x-show="hover && hoverIndex > -1">
+                          <line
+                            :x1="points[hoverIndex]?.x ?? 0"
+                            y1="0"
+                            :x2="points[hoverIndex]?.x ?? 0"
+                            y2="100"
+                            stroke="white"
+                            stroke-width="1"
+                            stroke-dasharray="2 2"
+                            opacity="0.5"
+                            vector-effect="non-scaling-stroke"
+                          />
+                        </g>
+                      </svg>
+                    </template>
+                    <template x-if="points.length <= 1">
+                      <div
+                        class="text-muted-foreground border-border flex h-full w-full items-center
+                          justify-center rounded-lg border border-dashed text-xs"
+                      >
+                        표시할 데이터가 부족합니다.
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Filter Bar -->
+              <div class="mb-4 flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+                <div class="relative flex-1">
+                  <i
+                    x-lucide="search"
+                    class="text-muted-foreground absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2"
+                  >
+                  </i>
+                  <input
+                    type="text"
+                    x-model="filters.search"
+                    @input.debounce.300ms="handleFiltersChanged()"
+                    placeholder="검색..."
+                    class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
+                      bg-transparent py-1 pr-3 pl-9 text-sm shadow-xs transition-colors
+                      focus-visible:ring-1 focus-visible:outline-none"
+                  />
+                </div>
+                <div class="flex items-center gap-2">
+                  <div
+                    class="bg-card border-input flex h-9 items-center gap-1 rounded-md border px-2"
+                  >
+                    <input
+                      type="date"
+                      x-model="filters.dateStart"
+                      @change="handleFiltersChanged()"
+                      class="text-foreground h-full w-[90px] border-none bg-transparent p-0 text-xs
+                        outline-none focus:ring-0"
+                    />
+                    <span class="text-muted-foreground">~</span>
+                    <input
+                      type="date"
+                      x-model="filters.dateEnd"
+                      @change="handleFiltersChanged()"
+                      class="text-foreground h-full w-[90px] border-none bg-transparent p-0 text-xs
+                        outline-none focus:ring-0"
+                    />
+                  </div>
+                  <div x-show="detail.tab === 'maintenance'" class="relative">
+                    <select
+                      x-model="filters.type"
+                      @change="handleFiltersChanged()"
+                      class="border-input focus-visible:ring-ring flex h-9 w-[80px] rounded-md
+                        border bg-transparent px-2 py-1 text-xs shadow-xs transition-colors
+                        focus-visible:ring-1 focus-visible:outline-none"
+                    >
+                      <option value="all">전체</option>
+                      <option value="maintenance">정비</option>
+                      <option value="inspection">점검</option>
+                    </select>
+                  </div>
+                </div>
+                <button
+                  @click="openModal('add-record')"
+                  class="focus-visible:ring-ring bg-primary text-primary-foreground
+                    hover:bg-primary/90 inline-flex h-9 items-center justify-center rounded-md px-4
+                    text-sm font-medium whitespace-nowrap shadow transition-colors
+                    focus-visible:ring-1 focus-visible:outline-none"
+                >
+                  <i x-lucide="plus" class="mr-2 h-4 w-4"></i>
+                  <span x-text="getAddButtonText()"></span>
                 </button>
               </div>
-              <!-- Info View -->
-              <div
-                x-show="!detail.isEditing"
-                class="grid grid-cols-1 gap-x-8 gap-y-6 md:grid-cols-2"
-              >
-                <template
-                  x-for="label in ['차량번호', '제조사', '차종', '등급', '연식', '연료', '배기량', '누적 주행거리']"
-                >
-                  <div class="space-y-1">
-                    <p
-                      class="text-muted-foreground text-xs font-medium tracking-wider uppercase"
-                      x-text="label"
-                    ></p>
-                    <p class="text-lg font-medium" x-text="getCarInfoValue(label)"></p>
+
+              <!-- List Content -->
+              <div class="flex-1 space-y-2 overflow-y-auto pr-1 pb-20">
+                <template x-for="(record, index) in filteredRecords" :key="record.id">
+                  <div
+                    class="group bg-card border-border hover:bg-accent/50 relative rounded-lg border
+                      p-4 transition-colors"
+                  >
+                    <!-- Delete Button -->
+                    <button
+                      @click.stop="deleteRecord(record.id)"
+                      class="text-muted-foreground bg-popover hover:text-destructive hover:bg-accent
+                        absolute top-2 right-2 z-10 rounded-md p-1.5 opacity-0 transition-all
+                        group-hover:opacity-100"
+                    >
+                      <i x-lucide="trash-2" class="h-4 w-4"></i>
+                    </button>
+
+                    <div class="mb-2 flex items-start justify-between">
+                      <div class="flex items-center gap-2">
+                        <span class="text-muted-foreground font-mono text-xs" x-text="record.date">
+                        </span>
+                        <span
+                          class="inline-flex items-center rounded-full border px-2 py-0.5
+                            text-[10px] font-semibold transition-colors"
+                          :class="({
+                            'border-transparent bg-brand/10 text-brand': ['full', 'maintenance'].includes(record.subType),
+                            'border-transparent bg-orange-500/10 text-orange-400': ['partial', 'inspection'].includes(
+                              record.subType
+                            ),
+                            'border-transparent bg-secondary text-secondary-foreground': !record.subType,
+                          })"
+                          x-text="getSubTypeLabel(record)"
+                        >
+                        </span>
+                      </div>
+                      <span
+                        class="font-bold tabular-nums"
+                        x-text="formatNumber(record.amount) + '원'"
+                      >
+                      </span>
+                    </div>
+
+                    <div class="flex items-end justify-between text-sm">
+                      <div class="flex flex-col gap-1">
+                        <span
+                          class="max-w-[200px] truncate text-[16px] font-bold"
+                          x-text="getRecordLabel(record)"
+                        >
+                        </span>
+                        <div class="flex items-center gap-0.5">
+                          <div
+                            class="text-muted-foreground text-xs tabular-nums"
+                            x-text="formatDistance(record.odometer)"
+                          ></div>
+                          <span class="text-border mx-1">|</span>
+                          <span class="text-muted-foreground flex items-center gap-1 text-xs">
+                            <i x-lucide="map-pin" class="h-3 w-3"></i>
+                            <span x-text="record.place || '장소 미지정'"></span>
+                          </span>
+                        </div>
+                      </div>
+                      <div class="flex flex-col items-end gap-0.5 text-right">
+                        <template x-if="detail.tab === 'refuel' && record.volume">
+                          <div class="flex flex-col items-end">
+                            <div class="text-muted-foreground text-[10px]">
+                              <span x-text="record.volume + 'L'"></span>
+                              <span class="text-border mx-1">|</span>
+                              <span x-text="formatNumber(record.unitPrice) + '원/L'"></span>
+                            </div>
+                            <template x-if="getEfficiency(record, index)">
+                              <div
+                                class="mt-0.5 flex items-center gap-1 rounded bg-green-900/10 px-1.5
+                                  py-0.5 text-[10px] font-medium text-green-500"
+                              >
+                                <span
+                                  x-text="'+' + formatDistance(getEfficiency(record, index)?.dist ?? 0)"
+                                >
+                                </span>
+                                <span class="text-border">|</span>
+                                <span x-text="(getEfficiency(record, index)?.eff ?? 0) + ' km/L'">
+                                </span>
+                              </div>
+                            </template>
+                          </div>
+                        </template>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+                <template x-if="recordPage.loading">
+                  <div class="py-12 text-center">
+                    <p class="text-muted-foreground text-sm">불러오는 중...</p>
+                  </div>
+                </template>
+                <template x-if="!recordPage.loading && filteredRecords.length === 0">
+                  <div class="py-12 text-center">
+                    <div
+                      class="bg-secondary mb-4 inline-flex h-12 w-12 items-center justify-center
+                        rounded-full"
+                    >
+                      <i x-lucide="inbox" class="text-muted-foreground h-6 w-6"></i>
+                    </div>
+                    <p class="text-muted-foreground text-sm">내역이 없습니다.</p>
                   </div>
                 </template>
               </div>
-
-              <!-- Info Edit Form -->
-              <template x-if="detail.carInfoEditBuffer">
-                <form
-                  x-show="detail.isEditing"
-                  @submit.prevent="saveCarInfo"
-                  class="grid grid-cols-1 gap-4 md:grid-cols-2"
+              <div
+                x-show="filteredRecords.length > 0 || recordPage.hasPrev || recordPage.hasNext"
+                class="border-border mt-3 flex items-center justify-between border-t pt-3"
+              >
+                <button
+                  @click="goToPrevRecordsPage()"
+                  :disabled="!recordPage.hasPrev || recordPage.loading"
+                  class="border-border hover:bg-accent inline-flex h-8 items-center justify-center
+                    rounded-md border px-3 text-xs transition-colors disabled:pointer-events-none
+                    disabled:opacity-40"
                 >
-                  <div class="space-y-1.5">
-                    <label class="text-muted-foreground text-xs font-medium">차량번호</label>
-                    <input
-                      type="text"
-                      x-model="detail.carInfoEditBuffer.number"
-                      class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                        bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
-                        focus-visible:ring-1 focus-visible:outline-none"
-                    />
-                  </div>
-                  <div class="space-y-1.5">
-                    <label class="text-muted-foreground text-xs font-medium">제조사</label>
-                    <input
-                      type="text"
-                      x-model="detail.carInfoEditBuffer.maker"
-                      class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                        bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
-                        focus-visible:ring-1 focus-visible:outline-none"
-                    />
-                  </div>
-                  <div class="space-y-1.5">
-                    <label class="text-muted-foreground text-xs font-medium">차종</label>
-                    <input
-                      type="text"
-                      x-model="detail.carInfoEditBuffer.model"
-                      class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                        bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
-                        focus-visible:ring-1 focus-visible:outline-none"
-                    />
-                  </div>
-                  <div class="space-y-1.5">
-                    <label class="text-muted-foreground text-xs font-medium">등급</label>
-                    <input
-                      type="text"
-                      x-model="detail.carInfoEditBuffer.grade"
-                      class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                        bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
-                        focus-visible:ring-1 focus-visible:outline-none"
-                    />
-                  </div>
-                  <div class="space-y-1.5">
-                    <label class="text-muted-foreground text-xs font-medium">연식</label>
-                    <input
-                      type="number"
-                      x-model="detail.carInfoEditBuffer.year"
-                      class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                        bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
-                        focus-visible:ring-1 focus-visible:outline-none"
-                    />
-                  </div>
-                  <div class="space-y-1.5">
-                    <label class="text-muted-foreground text-xs font-medium">연료</label>
-                    <select
-                      x-model="detail.carInfoEditBuffer.fuelType"
-                      class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                        bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
-                        focus-visible:ring-1 focus-visible:outline-none"
-                    >
-                      <option>휘발유</option>
-                      <option>경유</option>
-                      <option>LPG</option>
-                      <option>전기</option>
-                      <option>하이브리드</option>
-                    </select>
-                  </div>
-                  <div class="col-span-full flex justify-end pt-4">
-                    <button
-                      type="submit"
-                      class="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9
-                        items-center justify-center rounded-md px-4 text-sm font-medium shadow
-                        transition-colors"
-                    >
-                      저장
-                    </button>
-                  </div>
-                </form>
-              </template>
+                  이전
+                </button>
+                <span class="text-muted-foreground text-xs" x-text="getRecordsPageLabel()"></span>
+                <button
+                  @click="goToNextRecordsPage()"
+                  :disabled="!recordPage.hasNext || recordPage.loading"
+                  class="border-border hover:bg-accent inline-flex h-8 items-center justify-center
+                    rounded-md border px-3 text-xs transition-colors disabled:pointer-events-none
+                    disabled:opacity-40"
+                >
+                  다음
+                </button>
+              </div>
             </div>
           </div>
-
-          <!-- Tab: Refuel / Maintenance / Etc -->
-          <div
-            x-show="['refuel', 'maintenance', 'etc'].includes(detail.tab)"
-            class="animate-in fade-in zoom-in-95 flex flex-1 flex-col overflow-hidden duration-200"
-          >
-            <!-- Dashboard (Refuel Only) -->
-            <div x-show="detail.tab === 'refuel'" class="mb-6 flex gap-4">
-              <!-- Card 1: Cost Comparison -->
-              <div
-                class="bg-card border-border flex h-32 max-w-[300px] flex-1 flex-col justify-between
-                  rounded-xl border p-4"
-              >
-                <span class="text-muted-foreground text-xs font-medium">이번 달 주유비</span>
-                <div class="mt-2 flex flex-col justify-start gap-1">
-                  <span
-                    class="text-4xl font-bold tracking-tight"
-                    x-text="formatNumber(getMonthlyRefuelCost().current)"
-                  ></span>
-                  <div
-                    class="mt-2 flex items-center gap-1 text-xs font-medium"
-                    :class="getMonthlyRefuelCost().diff > 0 ? 'text-red-400' : 'text-green-400'"
-                  >
-                    <span class="text-muted-foreground">지난달 대비</span>
-                    <span x-text="formatNumber(getMonthlyRefuelCost().diff)"></span>
-                    <span x-text="getMonthlyRefuelCost().diff > 0 ? '\u25b2' : '\u25bc'"></span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Card 2: Efficiency Graph -->
-              <div
-                x-data="chart()"
-                x-init="initChart()"
-                @mousemove="handleMouseMove"
-                @mouseleave="hover = false"
-                class="bg-card border-border group relative flex h-32 max-w-[400px] flex-1 flex-col
-                  overflow-hidden rounded-xl border p-4 select-none"
-              >
-                <div class="pointer-events-none relative z-20 mb-4">
-                  <span class="text-muted-foreground text-xs font-medium"
-                    >최근 연비 추이 (km/L)</span
-                  >
-                  <div x-show="points.length > 0" class="absolute top-0 right-0 text-right">
-                    <div
-                      class="text-foreground text-2xl font-bold tabular-nums"
-                      x-text="points.at(hover ? hoverIndex : -1)?.val"
-                    ></div>
-                    <div
-                      class="text-muted-foreground text-[10px]"
-                      x-text="points.at(hover ? hoverIndex : -1)?.date"
-                    ></div>
-                  </div>
-                </div>
-
-                <div class="relative z-10 min-h-0 w-full flex-1">
-                  <template x-if="points.length > 1">
-                    <svg
-                      class="h-full w-full overflow-visible"
-                      viewBox="0 0 100 100"
-                      preserveAspectRatio="none"
-                    >
-                      <defs>
-                        <linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
-                          <stop offset="0%" stop-color="white" stop-opacity="0.2" />
-                          <stop offset="100%" stop-color="white" stop-opacity="0" />
-                        </linearGradient>
-                      </defs>
-
-                      <!-- Gradient Area -->
-                      <path :d="getAreaPath()" fill="url(#chartGradient)" stroke="none" />
-
-                      <!-- Line -->
-                      <path
-                        :d="getPath()"
-                        fill="none"
-                        stroke="white"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        vector-effect="non-scaling-stroke"
-                      />
-
-                      <!-- Hover Line & Dot (Custom Scaling) -->
-                      <g x-show="hover && hoverIndex > -1">
-                        <line
-                          :x1="points[hoverIndex]?.x ?? 0"
-                          y1="0"
-                          :x2="points[hoverIndex]?.x ?? 0"
-                          y2="100"
-                          stroke="white"
-                          stroke-width="1"
-                          stroke-dasharray="2 2"
-                          opacity="0.5"
-                          vector-effect="non-scaling-stroke"
-                        />
-                      </g>
-                    </svg>
-                  </template>
-                  <template x-if="points.length <= 1">
-                    <div
-                      class="text-muted-foreground border-border flex h-full w-full items-center
-                        justify-center rounded-lg border border-dashed text-xs"
-                    >
-                      표시할 데이터가 부족합니다.
-                    </div>
-                  </template>
-                </div>
-              </div>
-            </div>
-
-            <!-- Filter Bar -->
-            <div class="mb-4 flex flex-col items-stretch gap-2 sm:flex-row sm:items-center">
-              <div class="relative flex-1">
-                <i
-                  x-lucide="search"
-                  class="text-muted-foreground absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2"
-                >
-                </i>
-                <input
-                  type="text"
-                  x-model="filters.search"
-                  @input.debounce.300ms="handleFiltersChanged()"
-                  placeholder="검색..."
-                  class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
-                    bg-transparent py-1 pr-3 pl-9 text-sm shadow-xs transition-colors
-                    focus-visible:ring-1 focus-visible:outline-none"
-                />
-              </div>
-              <div class="flex items-center gap-2">
-                <div
-                  class="bg-card border-input flex h-9 items-center gap-1 rounded-md border px-2"
-                >
-                  <input
-                    type="date"
-                    x-model="filters.dateStart"
-                    @change="handleFiltersChanged()"
-                    class="text-foreground h-full w-[90px] border-none bg-transparent p-0 text-xs
-                      outline-none focus:ring-0"
-                  />
-                  <span class="text-muted-foreground">~</span>
-                  <input
-                    type="date"
-                    x-model="filters.dateEnd"
-                    @change="handleFiltersChanged()"
-                    class="text-foreground h-full w-[90px] border-none bg-transparent p-0 text-xs
-                      outline-none focus:ring-0"
-                  />
-                </div>
-                <div x-show="detail.tab === 'maintenance'" class="relative">
-                  <select
-                    x-model="filters.type"
-                    @change="handleFiltersChanged()"
-                    class="border-input focus-visible:ring-ring flex h-9 w-[80px] rounded-md border
-                      bg-transparent px-2 py-1 text-xs shadow-xs transition-colors
-                      focus-visible:ring-1 focus-visible:outline-none"
-                  >
-                    <option value="all">전체</option>
-                    <option value="maintenance">정비</option>
-                    <option value="inspection">점검</option>
-                  </select>
-                </div>
-              </div>
-              <button
-                @click="openModal('add-record')"
-                class="focus-visible:ring-ring bg-primary text-primary-foreground
-                  hover:bg-primary/90 inline-flex h-9 items-center justify-center rounded-md px-4
-                  text-sm font-medium whitespace-nowrap shadow transition-colors
-                  focus-visible:ring-1 focus-visible:outline-none"
-              >
-                <i x-lucide="plus" class="mr-2 h-4 w-4"></i>
-                <span x-text="getAddButtonText()"></span>
-              </button>
-            </div>
-
-            <!-- List Content -->
-            <div class="flex-1 space-y-2 overflow-y-auto pr-1 pb-20">
-              <template x-for="(record, index) in filteredRecords" :key="record.id">
-                <div
-                  class="group bg-card border-border hover:bg-accent/50 relative rounded-lg border
-                    p-4 transition-colors"
-                >
-                  <!-- Delete Button -->
-                  <button
-                    @click.stop="deleteRecord(record.id)"
-                    class="text-muted-foreground bg-popover hover:text-destructive hover:bg-accent
-                      absolute top-2 right-2 z-10 rounded-md p-1.5 opacity-0 transition-all
-                      group-hover:opacity-100"
-                  >
-                    <i x-lucide="trash-2" class="h-4 w-4"></i>
-                  </button>
-
-                  <div class="mb-2 flex items-start justify-between">
-                    <div class="flex items-center gap-2">
-                      <span class="text-muted-foreground font-mono text-xs" x-text="record.date">
-                      </span>
-                      <span
-                        class="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px]
-                          font-semibold transition-colors"
-                        :class="({
-                          'border-transparent bg-brand/10 text-brand': ['full', 'maintenance'].includes(record.subType),
-                          'border-transparent bg-orange-500/10 text-orange-400': ['partial', 'inspection'].includes(
-                            record.subType
-                          ),
-                          'border-transparent bg-secondary text-secondary-foreground': !record.subType,
-                        })"
-                        x-text="getSubTypeLabel(record)"
-                      >
-                      </span>
-                    </div>
-                    <span
-                      class="font-bold tabular-nums"
-                      x-text="formatNumber(record.amount) + '원'"
-                    >
-                    </span>
-                  </div>
-
-                  <div class="flex items-end justify-between text-sm">
-                    <div class="flex flex-col gap-1">
-                      <span
-                        class="max-w-[200px] truncate text-[16px] font-bold"
-                        x-text="getRecordLabel(record)"
-                      >
-                      </span>
-                      <div class="flex items-center gap-0.5">
-                        <div
-                          class="text-muted-foreground text-xs tabular-nums"
-                          x-text="formatDistance(record.odometer)"
-                        ></div>
-                        <span class="text-border mx-1">|</span>
-                        <span class="text-muted-foreground flex items-center gap-1 text-xs">
-                          <i x-lucide="map-pin" class="h-3 w-3"></i>
-                          <span x-text="record.place || '장소 미지정'"></span>
-                        </span>
-                      </div>
-                    </div>
-                    <div class="flex flex-col items-end gap-0.5 text-right">
-                      <template x-if="detail.tab === 'refuel' && record.volume">
-                        <div class="flex flex-col items-end">
-                          <div class="text-muted-foreground text-[10px]">
-                            <span x-text="record.volume + 'L'"></span>
-                            <span class="text-border mx-1">|</span>
-                            <span x-text="formatNumber(record.unitPrice) + '원/L'"></span>
-                          </div>
-                          <template x-if="getEfficiency(record, index)">
-                            <div
-                              class="mt-0.5 flex items-center gap-1 rounded bg-green-900/10 px-1.5
-                                py-0.5 text-[10px] font-medium text-green-500"
-                            >
-                              <span
-                                x-text="'+' + formatDistance(getEfficiency(record, index)?.dist ?? 0)"
-                              >
-                              </span>
-                              <span class="text-border">|</span>
-                              <span x-text="(getEfficiency(record, index)?.eff ?? 0) + ' km/L'">
-                              </span>
-                            </div>
-                          </template>
-                        </div>
-                      </template>
-                    </div>
-                  </div>
-                </div>
-              </template>
-              <template x-if="recordPage.loading">
-                <div class="py-12 text-center">
-                  <p class="text-muted-foreground text-sm">불러오는 중...</p>
-                </div>
-              </template>
-              <template x-if="!recordPage.loading && filteredRecords.length === 0">
-                <div class="py-12 text-center">
-                  <div
-                    class="bg-secondary mb-4 inline-flex h-12 w-12 items-center justify-center
-                      rounded-full"
-                  >
-                    <i x-lucide="inbox" class="text-muted-foreground h-6 w-6"></i>
-                  </div>
-                  <p class="text-muted-foreground text-sm">내역이 없습니다.</p>
-                </div>
-              </template>
-            </div>
-            <div
-              x-show="filteredRecords.length > 0 || recordPage.hasPrev || recordPage.hasNext"
-              class="border-border mt-3 flex items-center justify-between border-t pt-3"
-            >
-              <button
-                @click="goToPrevRecordsPage()"
-                :disabled="!recordPage.hasPrev || recordPage.loading"
-                class="border-border hover:bg-accent inline-flex h-8 items-center justify-center
-                  rounded-md border px-3 text-xs transition-colors disabled:pointer-events-none
-                  disabled:opacity-40"
-              >
-                이전
-              </button>
-              <span class="text-muted-foreground text-xs" x-text="getRecordsPageLabel()"></span>
-              <button
-                @click="goToNextRecordsPage()"
-                :disabled="!recordPage.hasNext || recordPage.loading"
-                class="border-border hover:bg-accent inline-flex h-8 items-center justify-center
-                  rounded-md border px-3 text-xs transition-colors disabled:pointer-events-none
-                  disabled:opacity-40"
-              >
-                다음
-              </button>
-            </div>
-          </div>
-        </div>
-      </main>
+        </main>
+      </template>
     </div>
 
     <input
