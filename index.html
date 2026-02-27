@@ -128,7 +128,7 @@
     </style>
 
     <script src="https://cdn.jsdelivr.net/npm/dexie@4.2.1/dist/dexie.min.js"></script>
-    <script src="https://unpkg.com/clxdb@0.4.0/dist/clxdb.umd.cjs"></script>
+    <script src="https://unpkg.com/clxdb@0.5.0/dist/clxdb.umd.cjs"></script>
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.15.8/dist/cdn.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/lucide@0.563.0/dist/umd/lucide.min.js"></script>
   </head>
@@ -611,6 +611,105 @@
                     </template>
                   </div>
                 </div>
+              </div>
+
+              <!-- Maintenance Timers -->
+              <div x-show="detail.tab === 'maintenance'" class="mb-5 space-y-3">
+                <div class="flex items-center justify-between px-3">
+                  <div>
+                    <h4 class="text-sm font-semibold">해야 할 정비</h4>
+                    <p class="text-muted-foreground text-xs">정비 시점을 타이머로 관리하세요.</p>
+                  </div>
+                  <button
+                    @click="openModal('add-maintenance-timer')"
+                    class="border-border hover:bg-accent inline-flex h-8 items-center justify-center
+                      rounded-md border px-3 text-xs font-medium transition-colors"
+                  >
+                    <i x-lucide="plus" class="mr-1.5 h-3.5 w-3.5"></i>
+                    타이머 추가
+                  </button>
+                </div>
+
+                <template x-if="maintenanceTimerCards.length > 0">
+                  <div class="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1">
+                    <template x-for="timerCard in maintenanceTimerCards" :key="timerCard.id">
+                      <div
+                        class="bg-card border-border max-w-[320px] min-w-[280px] shrink-0 rounded-xl
+                          border p-4"
+                      >
+                        <div class="flex items-start justify-between gap-2">
+                          <h5
+                            class="max-w-[170px] truncate text-sm font-semibold"
+                            x-text="timerCard.title"
+                          ></h5>
+                          <span
+                            class="inline-flex items-center rounded-full border px-2 py-0.5
+                              text-[10px] font-semibold"
+                            :class="timerCard.repeat
+                              ? 'border-transparent bg-brand/15 text-brand'
+                              : 'border-border text-muted-foreground'"
+                            x-text="timerCard.repeat ? '반복' : '1회'"
+                          >
+                          </span>
+                        </div>
+
+                        <p
+                          class="text-muted-foreground mt-1 text-[11px]"
+                          x-text="timerCard.conditionLabel"
+                        ></p>
+                        <p
+                          class="mt-1 text-sm font-semibold tabular-nums"
+                          :class="timerCard.isOverdue ? 'text-red-400' : 'text-foreground'"
+                          x-text="timerCard.remainingLabel"
+                        ></p>
+
+                        <div class="bg-secondary mt-3 h-2 overflow-hidden rounded-full">
+                          <div
+                            class="h-full rounded-full transition-all duration-300"
+                            :class="timerCard.isOverdue ? 'bg-red-500' : 'bg-brand'"
+                            :style="`width: ${timerCard.progressPercent}%`"
+                          ></div>
+                        </div>
+
+                        <div class="mt-3 flex gap-2">
+                          <button
+                            @click="completeMaintenanceTimer(timerCard.id)"
+                            class="bg-primary text-primary-foreground hover:bg-primary/90
+                              inline-flex h-8 flex-1 items-center justify-center rounded-md px-2
+                              text-xs font-medium transition-colors"
+                          >
+                            완료
+                          </button>
+                          <button
+                            @click="deleteMaintenanceTimer(timerCard.id)"
+                            class="border-border text-muted-foreground hover:bg-accent
+                              hover:text-destructive inline-flex h-8 flex-1 items-center
+                              justify-center rounded-md border px-2 text-xs font-medium
+                              transition-colors"
+                          >
+                            삭제
+                          </button>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </template>
+
+                <template x-if="maintenanceTimerCards.length === 0">
+                  <div
+                    class="text-muted-foreground border-border bg-card/40 flex items-center
+                      justify-between rounded-lg border border-dashed px-4 py-3 text-xs"
+                  >
+                    <span>등록된 정비 타이머가 없습니다.</span>
+                    <button
+                      @click="openModal('add-maintenance-timer')"
+                      class="hover:text-foreground inline-flex items-center gap-1 font-medium"
+                    >
+                      <i x-lucide="plus" class="h-3.5 w-3.5"></i>
+                      추가
+                    </button>
+                  </div>
+                </template>
               </div>
 
               <!-- Filter Bar -->
@@ -1155,6 +1254,82 @@
               </button>
             </div>
           </form>
+
+          <!-- Add Maintenance Timer Form -->
+          <form
+            x-show="modal.type === 'add-maintenance-timer'"
+            @submit.prevent="submitAddMaintenanceTimer"
+            class="space-y-4"
+          >
+            <div class="grid gap-2">
+              <label class="text-sm font-medium">타이머 제목</label>
+              <input
+                type="text"
+                x-model="forms.maintenanceTimer.title"
+                required
+                placeholder="예: 엔진오일 교환"
+                class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
+                  bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:ring-1
+                  focus-visible:outline-none"
+              />
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div class="grid gap-2">
+                <label class="text-sm font-medium">마일리지 조건 (km)</label>
+                <input
+                  type="number"
+                  min="1"
+                  x-model="forms.maintenanceTimer.mileageIntervalKm"
+                  placeholder="예: 7000"
+                  class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
+                    bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
+                    focus-visible:ring-1 focus-visible:outline-none"
+                />
+              </div>
+              <div class="grid gap-2">
+                <label class="text-sm font-medium">시간 조건 (일)</label>
+                <input
+                  type="number"
+                  min="1"
+                  x-model="forms.maintenanceTimer.timeIntervalDays"
+                  placeholder="예: 180"
+                  class="border-input focus-visible:ring-ring flex h-9 w-full rounded-md border
+                    bg-transparent px-3 py-1 text-sm shadow-xs transition-colors
+                    focus-visible:ring-1 focus-visible:outline-none"
+                />
+              </div>
+            </div>
+
+            <label
+              class="border-input bg-accent/30 flex cursor-pointer items-center gap-2 rounded-md
+                border px-3 py-2"
+            >
+              <input
+                type="checkbox"
+                x-model="forms.maintenanceTimer.repeat"
+                class="text-brand border-input h-4 w-4 rounded"
+              />
+              <span class="text-muted-foreground text-xs"
+                >완료 후 자동으로 다음 주기를 시작합니다.</span
+              >
+            </label>
+
+            <p class="text-muted-foreground text-xs">
+              마일리지 조건 또는 시간 조건 중 하나 이상 입력해야 합니다.
+            </p>
+
+            <div class="flex justify-end pt-2">
+              <button
+                type="submit"
+                class="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9
+                  items-center justify-center rounded-md px-4 text-sm font-medium shadow
+                  transition-colors"
+              >
+                추가하기
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>
@@ -1184,7 +1359,14 @@
     </div>
 
     <script>
-      const createEmptyDatabase = () => ({ config: { type: 'clxdb' }, cars: [], records: [] });
+      const createEmptyDatabase = () => ({
+        config: { type: 'clxdb' },
+        cars: [],
+        records: [],
+        maintenanceTimers: [],
+      });
+
+      const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
       const isFullRefuelRecord = record => String(record?.subType || 'full') !== 'partial';
 
@@ -1269,6 +1451,22 @@
           return id.startsWith('car:') || id.startsWith('record:');
         }
 
+        isMaintenanceTimerDocumentId(id) {
+          return id.startsWith('meta:maintenanceTimers:');
+        }
+
+        getMaintenanceTimerDocumentId(carId) {
+          return `meta:maintenanceTimers:${carId}`;
+        }
+
+        getCarIdFromMaintenanceTimerDocumentId(id) {
+          const prefix = 'meta:maintenanceTimers:';
+          if (!id.startsWith(prefix)) return null;
+
+          const carId = id.slice(prefix.length);
+          return carId ? String(carId) : null;
+        }
+
         getDocumentKind(id) {
           if (id.startsWith('car:')) return 'car';
           if (id.startsWith('record:')) return 'record';
@@ -1282,6 +1480,66 @@
 
         isPlaceCounterDocumentId(id) {
           return id.startsWith('meta:places:');
+        }
+
+        toIsoDateTime(value, fallbackValue = null) {
+          const valueText = String(value || '').trim();
+          const parsedValueTimestamp = valueText ? Date.parse(valueText) : NaN;
+          if (Number.isFinite(parsedValueTimestamp)) {
+            return new Date(parsedValueTimestamp).toISOString();
+          }
+
+          const fallbackText = String(fallbackValue || '').trim();
+          const parsedFallbackTimestamp = fallbackText ? Date.parse(fallbackText) : NaN;
+          if (Number.isFinite(parsedFallbackTimestamp)) {
+            return new Date(parsedFallbackTimestamp).toISOString();
+          }
+
+          return new Date().toISOString();
+        }
+
+        normalizeMaintenanceTimer(rawTimer) {
+          const title = String(rawTimer?.title || '').trim();
+          if (!title) return null;
+
+          const mileageIntervalKm = Number(rawTimer?.mileageIntervalKm);
+          const normalizedMileageIntervalKm =
+            Number.isFinite(mileageIntervalKm) && mileageIntervalKm > 0
+              ? Math.round(mileageIntervalKm)
+              : null;
+
+          const timeIntervalDays = Number(rawTimer?.timeIntervalDays);
+          const normalizedTimeIntervalDays =
+            Number.isFinite(timeIntervalDays) && timeIntervalDays > 0
+              ? Math.round(timeIntervalDays)
+              : null;
+
+          if (!normalizedMileageIntervalKm && !normalizedTimeIntervalDays) {
+            return null;
+          }
+
+          const baseOdometerKm = Number(rawTimer?.baseOdometerKm);
+          const normalizedBaseOdometerKm =
+            Number.isFinite(baseOdometerKm) && baseOdometerKm >= 0 ? baseOdometerKm : 0;
+
+          return {
+            id: String(rawTimer?.id || crypto.randomUUID()),
+            title,
+            mileageIntervalKm: normalizedMileageIntervalKm,
+            timeIntervalDays: normalizedTimeIntervalDays,
+            repeat: Boolean(rawTimer?.repeat),
+            baseOdometerKm: normalizedBaseOdometerKm,
+            baseStartedAt: this.toIsoDateTime(rawTimer?.baseStartedAt, rawTimer?.createdAt),
+            createdAt: this.toIsoDateTime(rawTimer?.createdAt, rawTimer?.baseStartedAt),
+          };
+        }
+
+        normalizeMaintenanceTimers(rawTimers) {
+          if (!Array.isArray(rawTimers)) return [];
+
+          return rawTimers
+            .map(rawTimer => this.normalizeMaintenanceTimer(rawTimer))
+            .filter(Boolean);
         }
 
         normalizePlaceId(place) {
@@ -1346,6 +1604,8 @@
         withLocalIndexes(document) {
           const kind = this.getDocumentKind(document.id);
           const isRecord = kind === 'record';
+          const isMaintenanceTimerMeta =
+            kind === 'meta' && this.isMaintenanceTimerDocumentId(document.id);
           const recordDateTs = isRecord ? this.toRecordTimestamp(document.data) : null;
 
           return {
@@ -1359,7 +1619,9 @@
               ? this.getCarIdFromRecordData(document.data)
               : kind === 'car'
                 ? document.id.slice(4)
-                : null,
+                : isMaintenanceTimerMeta
+                  ? this.getCarIdFromMaintenanceTimerDocumentId(document.id)
+                  : null,
             recordType: isRecord ? String(document.data?.type || '') : null,
             recordDateTs: isRecord ? recordDateTs : null,
             recordOdometer: isRecord ? Number(document.data?.odometer) || 0 : null,
@@ -1834,6 +2096,36 @@
           return this.readPlaceCounterFallback(carId);
         }
 
+        async readMaintenanceTimers(carId) {
+          const normalizedCarId = String(carId || '');
+          if (!normalizedCarId) return [];
+
+          const row = await this.getTable().get(
+            this.getMaintenanceTimerDocumentId(normalizedCarId)
+          );
+          if (!row || row.del || !row.data) return [];
+
+          return this.normalizeMaintenanceTimers(row.data.timers || []);
+        }
+
+        async stageMaintenanceTimers(carId, timers) {
+          const normalizedCarId = String(carId || '');
+          if (!normalizedCarId) return;
+
+          const normalizedTimers = this.normalizeMaintenanceTimers(timers);
+          const documentId = this.getMaintenanceTimerDocumentId(normalizedCarId);
+
+          if (!normalizedTimers.length) {
+            await this.stageDeleteDocument(documentId);
+            return;
+          }
+
+          await this.stageUpsertDocument(documentId, {
+            carId: normalizedCarId,
+            timers: normalizedTimers,
+          });
+        }
+
         async readRecordCarIds(documentIds) {
           if (!documentIds?.length) return {};
 
@@ -2036,10 +2328,22 @@
               );
             }
           } else if (id.startsWith('car:')) {
+            const carId = id.slice(4);
+
             await table.put(
               this.withLocalIndexes({
-                id: this.getPlaceCounterDocumentId(id.slice(4)),
+                id: this.getPlaceCounterDocumentId(carId),
                 at: tombstoneAt + 1,
+                seq: -1,
+                del: true,
+                data: undefined,
+              })
+            );
+
+            await table.put(
+              this.withLocalIndexes({
+                id: this.getMaintenanceTimerDocumentId(carId),
+                at: tombstoneAt + 2,
                 seq: -1,
                 del: true,
                 data: undefined,
@@ -2052,9 +2356,10 @@
 
         async loadSnapshot() {
           const snapshot = createEmptyDatabase();
-          const [carRows, recordRows] = await Promise.all([
+          const [carRows, recordRows, maintenanceTimerRows] = await Promise.all([
             this.getTable().where('kind').equals('car').toArray(),
             this.getTable().where('kind').equals('record').toArray(),
+            this.getTable().where('id').startsWith('meta:maintenanceTimers:').toArray(),
           ]);
 
           for (const row of carRows) {
@@ -2067,6 +2372,20 @@
             snapshot.records.push(this.toRecordEntity(row));
           }
 
+          for (const row of maintenanceTimerRows) {
+            if (row.del || !row.data) continue;
+
+            const carId =
+              row.data?.carId || this.getCarIdFromMaintenanceTimerDocumentId(String(row.id || ''));
+            const timers = this.normalizeMaintenanceTimers(row.data?.timers || []);
+            if (!carId || !timers.length) continue;
+
+            snapshot.maintenanceTimers.push({
+              carId: String(carId),
+              timers,
+            });
+          }
+
           return snapshot;
         }
 
@@ -2074,10 +2393,14 @@
           const snapshot = rawSnapshot || {};
           const cars = Array.isArray(snapshot.cars) ? snapshot.cars : [];
           const records = Array.isArray(snapshot.records) ? snapshot.records : [];
+          const maintenanceTimers = Array.isArray(snapshot.maintenanceTimers)
+            ? snapshot.maintenanceTimers
+            : [];
           const table = this.getTable();
           const desiredDocuments = [];
           const desiredIds = new Set();
           const placeCountersByCar = new Map();
+          const maintenanceTimersByCar = new Map();
           let at = Date.now();
 
           for (const rawCar of cars) {
@@ -2120,6 +2443,32 @@
             );
           }
 
+          for (const rawTimerEntry of maintenanceTimers) {
+            const carId = String(rawTimerEntry?.carId || '').trim();
+            if (!carId) continue;
+
+            maintenanceTimersByCar.set(
+              carId,
+              this.normalizeMaintenanceTimers(rawTimerEntry?.timers)
+            );
+          }
+
+          for (const [carId, timers] of maintenanceTimersByCar.entries()) {
+            if (!timers.length) continue;
+
+            const id = this.getMaintenanceTimerDocumentId(carId);
+            desiredIds.add(id);
+            desiredDocuments.push(
+              this.withLocalIndexes({
+                id,
+                at: ++at,
+                seq: -1,
+                del: false,
+                data: { carId, timers },
+              })
+            );
+          }
+
           for (const [carId, counter] of placeCountersByCar.entries()) {
             const places = this.placeCounterEntriesFromMap(counter);
             if (!places.length) continue;
@@ -2141,7 +2490,9 @@
           const tombstones = rows
             .filter(
               row =>
-                (this.isEntityDocumentId(row.id) || this.isPlaceCounterDocumentId(row.id)) &&
+                (this.isEntityDocumentId(row.id) ||
+                  this.isPlaceCounterDocumentId(row.id) ||
+                  this.isMaintenanceTimerDocumentId(row.id)) &&
                 !desiredIds.has(row.id)
             )
             .map(row =>
@@ -2226,6 +2577,12 @@
               totalDistance: '',
             },
             record: {},
+            maintenanceTimer: {
+              title: '',
+              mileageIntervalKm: '',
+              timeIntervalDays: '',
+              repeat: false,
+            },
           },
 
           autocomplete: { open: false },
@@ -2243,6 +2600,7 @@
           recordPageCursors: [null],
           recordPageCursorIndex: 0,
           placeCounter: [],
+          maintenanceTimers: [],
           refuelStats: { monthly: { current: 0, diff: 0 }, history: [] },
           toasts: [],
           backend: new DexieClxBackend(),
@@ -2252,13 +2610,16 @@
           remoteChanges: {
             carsChanged: false,
             changedRecordCarIds: new Set(),
+            changedMaintenanceTimerCarIds: new Set(),
             unknownRecordChanges: false,
+            unknownMaintenanceTimerChanges: false,
           },
           remoteChangesDrain: Promise.resolve(),
           isStartingDb: false,
 
           init() {
             this.db = null;
+            this.maintenanceTimers = [];
             Alpine.store('app').refuelHistory = [];
           },
 
@@ -2297,6 +2658,134 @@
           get filteredPlaces() {
             const q = (this.forms.record.place || '').toLowerCase();
             return this.placeSuggestions.filter(p => p.toLowerCase().includes(q));
+          },
+
+          get maintenanceTimerCards() {
+            const nowTimestamp = Date.now();
+            const currentOdometerKm = Number(this.activeCar?.totalDistance) || 0;
+
+            return this.maintenanceTimers
+              .map(timer => this.buildMaintenanceTimerCard(timer, nowTimestamp, currentOdometerKm))
+              .filter(Boolean)
+              .sort((a, b) => {
+                if (a.priority !== b.priority) return a.priority - b.priority;
+                return String(a.title || '').localeCompare(String(b.title || ''), 'ko');
+              });
+          },
+
+          getRemainingMileageLabel(remainingKm) {
+            const normalizedRemainingKm = Number(remainingKm) || 0;
+
+            if (normalizedRemainingKm >= 0) {
+              return `${this.formatNumber(Math.max(0, Math.ceil(normalizedRemainingKm)))}km 남음`;
+            }
+
+            return `${this.formatNumber(Math.max(1, Math.ceil(Math.abs(normalizedRemainingKm))))}km 초과`;
+          },
+
+          getRemainingTimeLabel(remainingDays) {
+            const normalizedRemainingDays = Number(remainingDays) || 0;
+
+            if (normalizedRemainingDays >= 0) {
+              return `${this.formatNumber(Math.max(0, Math.ceil(normalizedRemainingDays)))}일 남음`;
+            }
+
+            return `${this.formatNumber(Math.max(1, Math.ceil(Math.abs(normalizedRemainingDays))))}일 초과`;
+          },
+
+          getMaintenanceTimerConditionLabel(timer, primaryConditionKind, conditionCount) {
+            const mileageIntervalKm = Number(timer?.mileageIntervalKm);
+            const timeIntervalDays = Number(timer?.timeIntervalDays);
+            const mileageLabel =
+              Number.isFinite(mileageIntervalKm) && mileageIntervalKm > 0
+                ? `${this.formatNumber(Math.round(mileageIntervalKm))}km`
+                : '';
+            const timeLabel =
+              Number.isFinite(timeIntervalDays) && timeIntervalDays > 0
+                ? `${this.formatNumber(Math.round(timeIntervalDays))}일`
+                : '';
+
+            if (conditionCount > 1 && mileageLabel && timeLabel) {
+              const primaryLabel =
+                primaryConditionKind === 'mileage' ? '마일리지 우선' : '시간 우선';
+              return `${mileageLabel} / ${timeLabel} (${primaryLabel})`;
+            }
+
+            if (mileageLabel) return `${mileageLabel} 주기`;
+            if (timeLabel) return `${timeLabel} 주기`;
+            return '주기 미설정';
+          },
+
+          buildMaintenanceTimerCard(timer, nowTimestamp = Date.now(), currentOdometerKm = 0) {
+            if (!timer) return null;
+
+            const conditions = [];
+            const mileageIntervalKm = Number(timer.mileageIntervalKm);
+            const baseOdometerKm = Number(timer.baseOdometerKm) || 0;
+
+            if (Number.isFinite(mileageIntervalKm) && mileageIntervalKm > 0) {
+              const elapsedKm = Math.max(0, currentOdometerKm - baseOdometerKm);
+              const remainingKm = mileageIntervalKm - elapsedKm;
+              conditions.push({
+                kind: 'mileage',
+                progressRatio: elapsedKm / mileageIntervalKm,
+                remainingRatio: remainingKm / mileageIntervalKm,
+                remainingValue: remainingKm,
+                remainingLabel: this.getRemainingMileageLabel(remainingKm),
+              });
+            }
+
+            const timeIntervalDays = Number(timer.timeIntervalDays);
+            const baseStartedTimestamp = Date.parse(
+              String(timer.baseStartedAt || timer.createdAt || '')
+            );
+            const safeBaseStartedTimestamp = Number.isFinite(baseStartedTimestamp)
+              ? baseStartedTimestamp
+              : nowTimestamp;
+
+            if (Number.isFinite(timeIntervalDays) && timeIntervalDays > 0) {
+              const elapsedDays = Math.max(
+                0,
+                (nowTimestamp - safeBaseStartedTimestamp) / DAY_IN_MS
+              );
+              const remainingDays = timeIntervalDays - elapsedDays;
+              conditions.push({
+                kind: 'time',
+                progressRatio: elapsedDays / timeIntervalDays,
+                remainingRatio: remainingDays / timeIntervalDays,
+                remainingValue: remainingDays,
+                remainingLabel: this.getRemainingTimeLabel(remainingDays),
+              });
+            }
+
+            if (!conditions.length) return null;
+
+            const primaryCondition = conditions.reduce((selectedCondition, condition) => {
+              if (!selectedCondition) return condition;
+              return condition.remainingRatio < selectedCondition.remainingRatio
+                ? condition
+                : selectedCondition;
+            }, null);
+
+            if (!primaryCondition) return null;
+
+            return {
+              id: String(timer.id || ''),
+              title: String(timer.title || '').trim() || '정비 타이머',
+              repeat: Boolean(timer.repeat),
+              progressPercent: Math.min(
+                100,
+                Math.max(0, Math.round((Number(primaryCondition.progressRatio) || 0) * 100))
+              ),
+              isOverdue: Number(primaryCondition.remainingValue) < 0,
+              remainingLabel: primaryCondition.remainingLabel,
+              conditionLabel: this.getMaintenanceTimerConditionLabel(
+                timer,
+                primaryCondition.kind,
+                conditions.length
+              ),
+              priority: Number(primaryCondition.remainingRatio),
+            };
           },
 
           isRecordTab(tab = this.detail.tab) {
@@ -2424,16 +2913,30 @@
             Alpine.store('app').refuelHistory = history;
           },
 
+          async refreshMaintenanceTimers() {
+            if (!this.backend.isReady() || !this.detail.carId) {
+              this.maintenanceTimers = [];
+              return;
+            }
+
+            this.maintenanceTimers = await this.backend.readMaintenanceTimers(this.detail.carId);
+          },
+
           async refreshActiveCarData({ resetPage = true } = {}) {
             if (!this.backend.isReady() || !this.detail.carId) {
               this.resetRecordPageState();
               this.placeCounter = [];
+              this.maintenanceTimers = [];
               this.refuelStats = { monthly: { current: 0, diff: 0 }, history: [] };
               Alpine.store('app').refuelHistory = [];
               return;
             }
 
-            await Promise.all([this.refreshPlaceCounter(), this.refreshRefuelStats()]);
+            await Promise.all([
+              this.refreshPlaceCounter(),
+              this.refreshRefuelStats(),
+              this.refreshMaintenanceTimers(),
+            ]);
 
             if (this.isRecordTab()) {
               if (resetPage) {
@@ -2468,6 +2971,7 @@
           async reloadCars() {
             if (!this.backend.isReady()) {
               this.db = null;
+              this.maintenanceTimers = [];
               return;
             }
 
@@ -2478,6 +2982,7 @@
               this.detail = { tab: 'info' };
               this.resetRecordPageState();
               this.placeCounter = [];
+              this.maintenanceTimers = [];
               this.refuelStats = { monthly: { current: 0, diff: 0 }, history: [] };
               Alpine.store('app').refuelHistory = [];
               if (this.router.current === 'car-detail') {
@@ -2489,7 +2994,9 @@
           resetRemoteChanges() {
             this.remoteChanges.carsChanged = false;
             this.remoteChanges.changedRecordCarIds.clear();
+            this.remoteChanges.changedMaintenanceTimerCarIds.clear();
             this.remoteChanges.unknownRecordChanges = false;
+            this.remoteChanges.unknownMaintenanceTimerChanges = false;
           },
 
           queueRemoteChangeTask(task) {
@@ -2508,6 +3015,19 @@
             for (const document of documents) {
               if (document.id.startsWith('car:')) {
                 this.remoteChanges.carsChanged = true;
+                continue;
+              }
+
+              if (this.backend.isMaintenanceTimerDocumentId(document.id)) {
+                const carId =
+                  (document.data?.carId && String(document.data.carId)) ||
+                  this.backend.getCarIdFromMaintenanceTimerDocumentId(document.id);
+
+                if (carId) {
+                  this.remoteChanges.changedMaintenanceTimerCarIds.add(carId);
+                } else {
+                  this.remoteChanges.unknownMaintenanceTimerChanges = true;
+                }
                 continue;
               }
 
@@ -2542,7 +3062,9 @@
             const hasChanges =
               this.remoteChanges.carsChanged ||
               this.remoteChanges.unknownRecordChanges ||
-              this.remoteChanges.changedRecordCarIds.size > 0;
+              this.remoteChanges.unknownMaintenanceTimerChanges ||
+              this.remoteChanges.changedRecordCarIds.size > 0 ||
+              this.remoteChanges.changedMaintenanceTimerCarIds.size > 0;
 
             if (!hasChanges) return;
 
@@ -2559,11 +3081,16 @@
             const shouldRefreshActiveCar =
               Boolean(activeCarId) &&
               (this.remoteChanges.unknownRecordChanges ||
-                this.remoteChanges.changedRecordCarIds.has(activeCarId));
+                this.remoteChanges.unknownMaintenanceTimerChanges ||
+                this.remoteChanges.changedRecordCarIds.has(activeCarId) ||
+                this.remoteChanges.changedMaintenanceTimerCarIds.has(activeCarId));
 
             if (shouldRefreshActiveCar) {
-              await this.refreshPlaceCounter();
-              await this.refreshRefuelStats();
+              await Promise.all([
+                this.refreshPlaceCounter(),
+                this.refreshRefuelStats(),
+                this.refreshMaintenanceTimers(),
+              ]);
 
               if (this.isRecordTab()) {
                 this.recordPageCursors = [null];
@@ -2605,7 +3132,15 @@
 
               const client = await clxdb.startClxDBWithUI({
                 database: this.backend,
-                ui: { syncIndicator: true },
+                ui: {
+                  theme: 'dark',
+                  i18n: { locale: 'ko' },
+                  style: {
+                    palette: { primaryColor: '#6366f1', defaultColor: '#202020' },
+                    fontFamily: 'var(--font-sans)',
+                  },
+                  syncIndicator: true,
+                },
               });
 
               if (!client) {
@@ -2623,6 +3158,7 @@
               await this.reloadCars();
               this.resetRecordPageState();
               this.placeCounter = [];
+              this.maintenanceTimers = [];
               await this.refreshRefuelStats();
               await this.runViewTransition(() => {
                 this.router.current = 'car-list';
@@ -2659,6 +3195,10 @@
 
             if (tab === 'refuel') {
               await this.refreshRefuelStats();
+            }
+
+            if (tab === 'maintenance') {
+              await this.refreshMaintenanceTimers();
             }
           },
 
@@ -2698,6 +3238,15 @@
                 memo: '',
               };
               this.autocomplete.open = false;
+            }
+
+            if (t === 'add-maintenance-timer') {
+              this.forms.maintenanceTimer = {
+                title: '',
+                mileageIntervalKm: '',
+                timeIntervalDays: '',
+                repeat: false,
+              };
             }
           },
 
@@ -2761,6 +3310,114 @@
             this.showToast('기록 추가됨', 'success');
           },
 
+          async submitAddMaintenanceTimer() {
+            if (!this.backend.isReady() || !this.detail.carId || !this.activeCar) return;
+
+            const title = String(this.forms.maintenanceTimer.title || '').trim();
+            const mileageIntervalKm = Number(this.forms.maintenanceTimer.mileageIntervalKm);
+            const timeIntervalDays = Number(this.forms.maintenanceTimer.timeIntervalDays);
+            const normalizedMileageIntervalKm =
+              Number.isFinite(mileageIntervalKm) && mileageIntervalKm > 0
+                ? Math.round(mileageIntervalKm)
+                : null;
+            const normalizedTimeIntervalDays =
+              Number.isFinite(timeIntervalDays) && timeIntervalDays > 0
+                ? Math.round(timeIntervalDays)
+                : null;
+
+            if (!title) {
+              this.showToast('타이머 제목을 입력하세요.', 'error');
+              return;
+            }
+
+            if (!normalizedMileageIntervalKm && !normalizedTimeIntervalDays) {
+              this.showToast('마일리지 또는 시간 조건을 입력하세요.', 'error');
+              return;
+            }
+
+            const nowIso = new Date().toISOString();
+            const nextTimers = [
+              {
+                id: crypto.randomUUID(),
+                title,
+                mileageIntervalKm: normalizedMileageIntervalKm,
+                timeIntervalDays: normalizedTimeIntervalDays,
+                repeat: Boolean(this.forms.maintenanceTimer.repeat),
+                baseOdometerKm: Number(this.activeCar.totalDistance) || 0,
+                baseStartedAt: nowIso,
+                createdAt: nowIso,
+              },
+              ...this.maintenanceTimers,
+            ];
+
+            await this.backend.stageMaintenanceTimers(this.detail.carId, nextTimers);
+            await this.refreshMaintenanceTimers();
+            void this.triggerSync();
+            this.closeModal();
+            this.showToast('정비 타이머 추가됨', 'success');
+          },
+
+          async completeMaintenanceTimer(timerId) {
+            if (!this.backend.isReady() || !this.detail.carId) return;
+
+            const normalizedTimerId = String(timerId || '');
+            if (!normalizedTimerId) return;
+
+            const targetTimer = this.maintenanceTimers.find(
+              timer => String(timer.id || '') === normalizedTimerId
+            );
+            if (!targetTimer) return;
+
+            const currentOdometerKm = Number(this.activeCar?.totalDistance) || 0;
+            const nowIso = new Date().toISOString();
+
+            const nextTimers = targetTimer.repeat
+              ? this.maintenanceTimers.map(timer =>
+                  String(timer.id || '') === normalizedTimerId
+                    ? {
+                        ...timer,
+                        baseOdometerKm: currentOdometerKm,
+                        baseStartedAt: nowIso,
+                      }
+                    : timer
+                )
+              : this.maintenanceTimers.filter(
+                  timer => String(timer.id || '') !== normalizedTimerId
+                );
+
+            await this.backend.stageMaintenanceTimers(this.detail.carId, nextTimers);
+            await this.refreshMaintenanceTimers();
+            void this.triggerSync();
+            this.showToast(
+              targetTimer.repeat
+                ? '정비 타이머가 다음 주기로 리셋되었습니다.'
+                : '정비 타이머 완료됨',
+              'success'
+            );
+          },
+
+          async deleteMaintenanceTimer(timerId) {
+            if (!this.backend.isReady() || !this.detail.carId) return;
+
+            const normalizedTimerId = String(timerId || '');
+            if (!normalizedTimerId) return;
+
+            if (!confirm('정말로 이 정비 타이머를 삭제하시겠습니까?')) {
+              return;
+            }
+
+            const nextTimers = this.maintenanceTimers.filter(
+              timer => String(timer.id || '') !== normalizedTimerId
+            );
+
+            if (nextTimers.length === this.maintenanceTimers.length) return;
+
+            await this.backend.stageMaintenanceTimers(this.detail.carId, nextTimers);
+            await this.refreshMaintenanceTimers();
+            void this.triggerSync();
+            this.showToast('정비 타이머가 삭제되었습니다.', 'success');
+          },
+
           async deleteRecord(id) {
             if (!this.backend.isReady()) return;
 
@@ -2777,6 +3434,8 @@
               this.router.current = 'car-list';
               this.detail.carId = null;
             });
+
+            this.maintenanceTimers = [];
           },
 
           async selectCar(id) {
@@ -2787,7 +3446,11 @@
               this.resetRecordPageState();
             });
 
-            await Promise.all([this.refreshPlaceCounter(), this.refreshRefuelStats()]);
+            await Promise.all([
+              this.refreshPlaceCounter(),
+              this.refreshRefuelStats(),
+              this.refreshMaintenanceTimers(),
+            ]);
           },
 
           toggleEditInfo() {
@@ -2838,7 +3501,11 @@
 
           getModalTitle() {
             return (
-              { 'add-car': '차량 추가', 'add-record': '새로운 기록' }[this.modal.type] || '설정'
+              {
+                'add-car': '차량 추가',
+                'add-record': '새로운 기록',
+                'add-maintenance-timer': '정비 타이머 추가',
+              }[this.modal.type] || '설정'
             );
           },
 
@@ -2924,6 +3591,7 @@
                 this.detail = { tab: 'info' };
                 this.resetRecordPageState();
                 this.placeCounter = [];
+                this.maintenanceTimers = [];
                 this.refuelStats = { monthly: { current: 0, diff: 0 }, history: [] };
                 Alpine.store('app').refuelHistory = [];
                 await this.reloadCars();
@@ -2944,6 +3612,7 @@
             this.detail = { tab: 'info' };
             this.resetRecordPageState();
             this.placeCounter = [];
+            this.maintenanceTimers = [];
             this.refuelStats = { monthly: { current: 0, diff: 0 }, history: [] };
             Alpine.store('app').refuelHistory = [];
             this.resetRemoteChanges();
