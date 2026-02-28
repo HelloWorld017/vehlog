@@ -910,6 +910,8 @@
               <div class="flex-1 space-y-2 overflow-y-auto pr-1 pb-20">
                 <template x-for="(record, index) in filteredRecords" :key="record.id">
                   <div
+                    @click="toggleRecordDetail(record.id)"
+                    :class="isRecordDetailExpandableTab() ? 'cursor-pointer' : ''"
                     class="group bg-card border-border hover:bg-accent/50 relative rounded-lg border
                       p-4 transition-colors"
                   >
@@ -950,11 +952,21 @@
 
                     <div class="flex items-end justify-between text-sm">
                       <div class="flex flex-col gap-1">
-                        <span
-                          class="max-w-[200px] truncate text-[16px] font-bold"
-                          x-text="getRecordLabel(record)"
-                        >
-                        </span>
+                        <template x-if="isRecordDetailExpandableTab()">
+                          <div
+                            class="hover:text-foreground inline-flex max-w-[240px] items-center
+                              gap-1 text-left text-[16px] font-bold transition-colors"
+                          >
+                            <span class="truncate" x-text="getRecordLabel(record)"></span>
+                          </div>
+                        </template>
+                        <template x-if="!isRecordDetailExpandableTab()">
+                          <span
+                            class="max-w-[200px] truncate text-[16px] font-bold"
+                            x-text="getRecordLabel(record)"
+                          >
+                          </span>
+                        </template>
                         <div class="flex items-center gap-0.5">
                           <div
                             class="text-muted-foreground text-xs tabular-nums"
@@ -993,6 +1005,21 @@
                         </template>
                       </div>
                     </div>
+                    <template x-if="isRecordDetailExpandableTab()">
+                      <div
+                        x-show="isRecordDetailOpen(record.id)"
+                        x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="-translate-y-1 opacity-0"
+                        x-transition:enter-end="translate-y-0 opacity-100"
+                        class="border-border bg-background/40 mt-3 rounded-md border px-3 py-2"
+                      >
+                        <p class="text-muted-foreground text-[11px] font-medium">상세내역</p>
+                        <p
+                          class="mt-1 text-sm leading-relaxed whitespace-pre-line"
+                          x-text="record.memo || '입력된 상세내역이 없습니다.'"
+                        ></p>
+                      </div>
+                    </template>
                   </div>
                 </template>
                 <template x-if="recordPage.loading">
@@ -2729,6 +2756,7 @@
           },
           recordPageCursors: [null],
           recordPageCursorIndex: 0,
+          recordDetailOpenId: null,
           placeCounter: [],
           maintenanceTimers: [],
           refuelStats: { monthly: { current: 0, diff: 0 }, history: [] },
@@ -2934,6 +2962,7 @@
           resetRecordPageState() {
             this.recordPageCursors = [null];
             this.recordPageCursorIndex = 0;
+            this.recordDetailOpenId = null;
             this.recordPage = {
               ...this.recordPage,
               items: [],
@@ -2985,9 +3014,25 @@
                 page: this.recordPageCursorIndex + 1,
                 loading: false,
               };
+              this.syncRecordDetailOpenState();
             } catch (error) {
               console.error(error);
               this.recordPage.loading = false;
+            }
+          },
+
+          syncRecordDetailOpenState() {
+            if (!this.isRecordDetailExpandableTab()) {
+              this.recordDetailOpenId = null;
+              return;
+            }
+
+            const visibleRecordIds = new Set(
+              this.filteredRecords.map(record => String(record?.id || '')).filter(Boolean)
+            );
+
+            if (this.recordDetailOpenId && !visibleRecordIds.has(this.recordDetailOpenId)) {
+              this.recordDetailOpenId = null;
             }
           },
 
@@ -3667,6 +3712,27 @@
 
           getRecordLabel(r) {
             return r.volume ? `${r.volume}L` : r.item || r.title || '내역 없음';
+          },
+
+          isRecordDetailExpandableTab(tab = this.detail.tab) {
+            return ['maintenance', 'etc'].includes(String(tab || ''));
+          },
+
+          isRecordDetailOpen(recordId) {
+            const normalizedRecordId = String(recordId || '');
+            if (!normalizedRecordId) return false;
+
+            return this.recordDetailOpenId === normalizedRecordId;
+          },
+
+          toggleRecordDetail(recordId) {
+            if (!this.isRecordDetailExpandableTab()) return;
+
+            const normalizedRecordId = String(recordId || '');
+            if (!normalizedRecordId) return;
+
+            this.recordDetailOpenId =
+              this.recordDetailOpenId === normalizedRecordId ? null : normalizedRecordId;
           },
 
           formatDistance(k) {
